@@ -91,6 +91,7 @@
   /* Entrar */
   .entrar { padding: calc(2.5rem + env(safe-area-inset-top)) 1.5rem 2rem; max-width: 420px; margin: 0 auto; }
   .entrar .marca { margin-bottom: 2rem; }
+  .logo-hero { display: block; width: 100%; max-width: 300px; aspect-ratio: 1; object-fit: cover; margin: 0 auto 1.6rem; border-radius: 26px; box-shadow: var(--sombra); }
   .pin { letter-spacing: .6em; text-align: center; font-size: 1.3rem; }
   .pin::placeholder { letter-spacing: .15em; font-size: 1rem; }
   .ok-grande { width: 74px; height: 74px; border-radius: 50%; background: var(--lavanda); color: var(--morado); display: grid; place-items: center; margin: .3rem auto 1rem; }
@@ -130,8 +131,7 @@
 
 <!-- ENTRAR -->
 <section id="v-entrar" class="entrar oculto">
-  <div class="sello"><div class="marca"><div class="aura">AURA</div><div class="studio">STUDIO PILATES</div></div></div>
-  <div class="marca"><div class="by">by Constanza Hidalgo</div></div>
+  <img class="logo-hero" src="logo.jpg" alt="Aura Studio Pilates by Constanza Hidalgo">
   <form id="f-entrar" autocomplete="on">
     <label class="campo"><span>RUT o correo</span><input class="entrada" name="usuario" autocomplete="username" required placeholder="12.345.678-9"></label>
     <label class="campo"><span>PIN de 4 números</span><input class="entrada pin" name="pin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" autocomplete="current-password" required placeholder="••••"></label>
@@ -454,7 +454,7 @@ function vPlan() {
 function loQuiero(id) {
   var p = pub.planes.filter(function (x) { return x.id === id; })[0];
   modal('<h3>' + esc(p.nombre) + '</h3><p class="sub">' + p.clases + (p.clases === 1 ? ' clase' : ' clases') + ' · ' + (p.dias ? p.dias + ' días' : 'sin vencimiento') + ' · <b>' + plata(p.precio) + '</b></p>' +
-    (pub.transferencia ? '<div class="tarjeta" style="box-shadow:none;background:var(--fondo);font-size:.9rem"><b>Transferencia</b><br>' + esc(pub.transferencia) + '</div>' : '') +
+    (pub.transferencia ? '<div class="tarjeta" style="box-shadow:none;background:var(--fondo);font-size:.9rem;white-space:pre-line"><b>Datos de transferencia</b>\n' + esc(pub.transferencia) + '</div>' : '') +
     '<p style="font-size:.88rem;color:var(--suave)">Transfiere y mándanos el comprobante por WhatsApp. Constanza activa tu plan y lo ves aquí al tiro.</p>' +
     '<a class="btn ws bloque" target="_blank" href="' + ws('Hola Constanza, quiero el plan ' + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Escribir por WhatsApp</a>');
 }
@@ -464,8 +464,8 @@ function vTienda() {
   var h = '<h1 class="saludo" style="font-size:1.7rem">Tienda<small>Packs de clases y accesorios. Pides por WhatsApp y pagas por transferencia.</small></h1>';
   h += '<div class="seccion" style="margin-top:.4rem"><h2>Packs de clases</h2></div><div class="lista">';
   pub.planes.forEach(function (p) {
-    h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.clases === 1 ? (p.dias ? '1 clase' : 'Clase suelta') : p.clases + ' clases') + ' · ' +
-      (p.dias ? 'para usar en ' + p.dias + ' días' : 'sin vencimiento') + '</div></div><div class="pre">' + plata(p.precio) + '</div></div>' +
+    h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.clases === 1 ? (p.dias ? '1 clase' : 'Clase suelta') : p.clases + ' clases al mes') +
+      (p.dias === 30 && p.clases % 4 === 0 ? ' · ' + (p.clases / 4) + (p.clases === 4 ? ' vez' : ' veces') + ' por semana' : ' · ' + (p.dias ? 'para usar en ' + p.dias + ' días' : 'sin vencimiento')) + '</div></div><div class="pre">' + plata(p.precio) + '</div></div>' +
       '<button class="btn claro bloque peq" style="margin-top:.8rem" onclick="loQuiero(\'' + p.id + '\')">Lo quiero</button></div>';
   });
   h += '</div>';

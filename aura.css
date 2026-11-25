@@ -101,3 +101,12 @@ textarea.entrada { min-height: 80px; resize: vertical; }
 .sello .marca { width: 100%; }
 .sello .marca .aura { font-size: 1.75rem; letter-spacing: .26em; padding-left: .26em; }
 .sello .marca .studio { font-size: .5rem; letter-spacing: .3em; padding-left: .3em; }
+
+/* Fondo de hojas de Aura (fijo detrás de todo) */
+html, body { background: transparent; }
+html { background-color: #ECE6DF; }
+body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: url(fondo.jpg) center / cover no-repeat; }
+@media (max-aspect-ratio: 1/1) { body::before { background-image: url(fondo-movil.jpg); } }
+.tarjeta, .clase, .dia { background: rgba(255, 255, 255, .92); }
+.entrada { background: rgba(255, 255, 255, .95); }

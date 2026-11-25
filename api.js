@@ -78,8 +78,8 @@
       t.Config.push({ clave: k, valor: AuraCore.CONFIG_INICIAL[k] });
     });
     t.Config.forEach(function (c) {
-      if (c.clave === 'transferencia') c.valor = 'Constanza Hidalgo · Banco (ejemplo) · Cuenta 000000 · correo@ejemplo.cl';
-      if (c.clave === 'politicas') c.valor = 'Reservas: se reserva hasta las 21:00 del día anterior.\nCancelaciones: sin costo hasta 12 horas antes de la clase. Después, la clase se descuenta igual.\nPuntualidad: llega 5 minutos antes. Pasados 10 minutos no se puede ingresar por seguridad.\nVestimenta: usa calcetines antideslizantes.\nSalud: avísale a la profesora cualquier lesión, embarazo o condición.\nPlanes: son personales y deben usarse dentro de su vigencia.';
+      if (c.clave === 'transferencia') c.valor = "Nombre: Constanza Hidalgo Ramírez\nBanco: Mercado Pago\nTipo de cuenta: Vista\nN° de cuenta: 1007446024\nRUT: 16.303.811-0";
+      if (c.clave === 'politicas') c.valor = "El plan contratado es mensual: las clases deben utilizarse dentro de los 30 días posteriores a la compra.\nPodrás agendar todas tus clases desde la aplicación, eligiendo el horario que más te acomode. Se reserva hasta las 21:00 del día anterior.\nEl plazo mínimo para cancelar una clase desde la aplicación es de 12 horas de anticipación. Pasado ese tiempo, la clase no podrá ser reembolsada a tu plan.\nTe recomendamos llegar 5 o 10 minutos antes de tu clase para poder prepararte.\nUna vez iniciada la clase, el tiempo de tolerancia es de 5 minutos. Transcurrido ese plazo no podrás acceder a la sesión para no interrumpirla, y la clase se contará como asistida y se descontará de tu plan.\nTe sugerimos no utilizar tu celular durante la clase, para que te puedas enfocar 100% en la sesión.\nUna vez finalizada la clase, no olvides limpiar tu reformer y los implementos utilizados.";
     });
     AuraCore.PLANES_INICIALES.forEach(function (p) {
       t.Planes.push({ id: p[0], nombre: p[1], clases: String(p[2]), dias_vigencia: String(p[3]), precio: String(p[4]), tope_semanal: String(p[5]), activo: 'si' });
