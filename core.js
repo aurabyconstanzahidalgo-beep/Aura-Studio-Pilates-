@@ -847,12 +847,17 @@ var AuraCore = (function () {
       horario: function (a, s) {
         soloPanel(s);
         return db.rows('Horario').filter(function (h) { return h.activo !== 'no'; })
-          .map(function (h) { return { id: h.id, dia_semana: num(h.dia_semana), inicio: h.inicio, fin: h.fin, tipo: h.tipo, cupos: num(h.cupos) }; })
+          .map(function (h) { return { id: h.id, dia_semana: num(h.dia_semana), inicio: normHora(h.inicio), fin: normHora(h.fin), tipo: h.tipo, cupos: num(h.cupos) }; })
           .sort(function (x, y) { return x.dia_semana - y.dia_semana || (x.inicio < y.inicio ? -1 : 1); });
       },
       guardarHorario: function (a, s) {
         var u = soloPanel(s, 'dueña');
+        a.inicio = normHora(a.inicio);
         if (!/^[1-7]$/.test(String(a.dia_semana)) || !/^\d{2}:\d{2}$/.test(String(a.inicio))) throw err('datos', 'Revisa el día y la hora.');
+        if (!a.id) {   // si ya existe esa clase (activa o quitada), se reutiliza: no se duplica
+          var ex = db.rows('Horario').filter(function (h) { return String(h.dia_semana) === String(a.dia_semana) && normHora(h.inicio) === a.inicio; })[0];
+          if (ex) a.id = ex.id;
+        }
         var datos = { id: a.id, dia_semana: a.dia_semana, inicio: a.inicio, fin: a.fin || sumarMin(a.inicio, 50),
           tipo: a.tipo || 'Reformer full body', profesora_id: a.profesora_id || 'U1', cupos: num(a.cupos) || num(cfg('cupos_por_clase')), activo: a.activo === 'no' ? 'no' : 'si' };
         var id = upsert('Horario', 'H', datos, ['dia_semana', 'inicio', 'fin', 'tipo', 'profesora_id', 'cupos', 'activo']);

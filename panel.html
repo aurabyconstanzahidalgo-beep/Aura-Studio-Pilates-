@@ -78,6 +78,20 @@
   .notif-n { position: absolute; top: 2px; right: 0; background: var(--alerta); color: #fff; font-size: .62rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
   .notif-nueva { background: #FCF3F4; border-radius: 10px; padding-left: .4rem; padding-right: .4rem; }
   .cl-cab .h, .rap-h { font-variant-numeric: lining-nums; }
+  .hor-scroll { overflow-x: auto; margin: 0 -.3rem; }
+  .hor-tabla { border-collapse: separate; border-spacing: 5px; width: 100%; min-width: 560px; }
+  .hor-tabla th { font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); font-weight: 800; text-align: center; }
+  .hor-tabla th:first-child { text-align: left; }
+  .hor-h { font-family: var(--serif); font-size: 1.2rem; font-weight: 600; white-space: nowrap; }
+  .hor-h .mini { font-family: var(--sans); font-size: .68rem; font-weight: 400; }
+  .hc { width: 100%; min-width: 44px; height: 44px; border-radius: 12px; border: 1.5px dashed var(--linea); background: #fff; color: var(--suave); font-size: 1.1rem; cursor: pointer; font-weight: 800; }
+  .hc:hover { border-color: var(--lila); color: var(--morado); }
+  .hc.on { background: var(--morado); border: 0; color: #fff; }
+  .hc:disabled { opacity: .6; }
+  .hor-cup { width: 64px; text-align: center; padding: .5rem; }
+  .hor-acc { white-space: nowrap; } .hor-acc .link { font-size: .8rem; display: block; }
+  .hor-nueva { display: flex; gap: .6rem; margin-top: .9rem; align-items: center; flex-wrap: wrap; }
+  .hor-nueva .entrada { width: 140px; }
   .soporte-flot { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
@@ -747,19 +761,10 @@ VISTAS.ajustes = function () {
       '<textarea class="entrada aj" data-k="politicas" style="min-height:220px">' + esc(c.politicas) + '</textarea>' + botonesTexto('politicas') + '</div>';
     h += '<div class="acciones"><button class="btn" onclick="guardarAjustes()">Guardar ajustes</button></div>';
     h += '<h2 class="sec">Google Drive</h2><div class="tarjeta" id="aj-drive"><div class="cargando">Revisando Drive…</div></div>';
-    h += '<h2 class="sec">Horario semanal</h2><div class="tarjeta">';
-    for (var d = 1; d <= 7; d++) {
-      var del = hor.filter(function (x) { return x.dia_semana === d; });
-      if (!del.length && d === 7) continue;
-      h += '<div class="hor-dia"><b>' + DIAS_SEM[d] + '</b>' + (del.length ? del.map(function (x) {
-        return '<span class="pill">' + x.inicio + ' <span class="mini">(' + x.cupos + ')</span><button title="Quitar" onclick="quitarHorario(\'' + x.id + '\',' + x.dia_semana + ',\'' + x.inicio + '\')">×</button></span>';
-      }).join('') : '<span class="mini">Sin clases</span>') + '</div>';
-    }
-    h += '<div class="fila2" style="margin-top:.6rem"><select class="entrada" id="h-d">' + [1, 2, 3, 4, 5, 6, 7].map(function (d) { return '<option value="' + d + '">' + DIAS_SEM[d] + '</option>'; }).join('') + '</select>' +
-      '<input class="entrada" id="h-h" type="time" value="18:10"></div><div class="fila2" style="margin-top:.6rem"><input class="entrada" id="h-c" inputmode="numeric" value="' + c.cupos_por_clase + '" placeholder="Cupos">' +
-      '<button class="btn" onclick="agregarHorario()">Agregar clase al horario</button></div><p class="mini">Los cambios rigen desde ya. Para un día puntual (feriado), usa "Suspender el día" en Clases.</p></div>';
+    h += '<h2 class="sec">Horario semanal</h2><div class="tarjeta" id="aj-hor"></div>';
     h += '<h2 class="sec">Planes y precios</h2><div id="aj-planes"></div>';
     $('#aj').innerHTML = h; pintarPlanes();
+    HOR = hor; CUPOS_DEF = +c.cupos_por_clase || 5; pintarHorario();
     api('drive').then(function (d) {
       $('#aj-drive').innerHTML = d.demo ? '<p class="mini">En la demo no hay Drive. Con el sistema conectado, aquí abres la carpeta del estudio, la planilla y los respaldos.</p>' :
         '<p class="mini" style="margin-top:0">Todos los datos están en la carpeta <b>Aura Studio Pilates</b> de tu Drive. Cada domingo se guarda un respaldo automático.' +
@@ -786,6 +791,70 @@ function subirTexto(input, k) {
   var r = new FileReader(); r.onload = function () { ponerTexto(k, r.result); }; r.readAsText(f, 'utf-8');
 }
 function usarTextoAura(k) { ponerTexto(k, TEXTOS_AURA[k]); }
+/* ----- Editor de horario en grilla ----- */
+var HOR = [], CUPOS_DEF = 5, HORAS_EXTRA = [], MOSTRAR_DOM = false;
+var DSEM_C = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+function horasHorario() {
+  var hs = {}; HOR.forEach(function (x) { hs[x.inicio] = 1; }); HORAS_EXTRA.forEach(function (x) { hs[x] = 1; });
+  return Object.keys(hs).sort();
+}
+function celda(d, h) { return HOR.filter(function (x) { return x.dia_semana === d && x.inicio === h; })[0]; }
+function cuposFila(h) { var c = HOR.filter(function (x) { return x.inicio === h; })[0]; return c ? c.cupos : CUPOS_DEF; }
+function pintarHorario() {
+  var horas = horasHorario(), usaDom = MOSTRAR_DOM || HOR.some(function (x) { return x.dia_semana === 7; });
+  var dias = usaDom ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6];
+  var total = HOR.length;
+  var h = '<p class="mini" style="margin-top:0">Toca una casilla para <b>agregar o quitar</b> esa clase. Hay <b>' + total + ' clases por semana</b>. Los cambios rigen desde ya; para un día puntual usa "Suspender el día" en Clases.</p>' +
+    '<div class="hor-scroll"><table class="hor-tabla"><thead><tr><th>Hora</th>' + dias.map(function (d) { return '<th>' + DSEM_C[d] + '</th>'; }).join('') + '<th>Cupos</th><th></th></tr></thead><tbody>';
+  horas.forEach(function (hr) {
+    h += '<tr><td class="hor-h">' + hr + '<div class="mini">hasta ' + Aura.util.horaDe(Aura.util.msDe('2000-01-01', hr) + 50 * 60000) + '</div></td>' + dias.map(function (d) {
+      var on = !!celda(d, hr);
+      return '<td><button class="hc' + (on ? ' on' : '') + '" title="' + DSEM_C[d] + ' ' + hr + '" onclick="toggleHor(' + d + ',\'' + hr + '\',this)">' + (on ? '✓' : '+') + '</button></td>';
+    }).join('') +
+      '<td><input class="entrada hor-cup" inputmode="numeric" value="' + cuposFila(hr) + '" onchange="cuposHor(\'' + hr + '\',this.value)"></td>' +
+      '<td class="hor-acc"><button class="link" onclick="filaHor(\'' + hr + '\',true)">Lun–Vie</button><button class="link" style="color:var(--alerta)" onclick="filaHor(\'' + hr + '\',false)">Quitar</button></td></tr>';
+  });
+  h += '</tbody></table></div><div class="hor-nueva"><input class="entrada" id="h-nueva" type="time" value="18:10"><button class="btn claro" onclick="nuevaHora()">+ Agregar hora</button>' +
+    (usaDom ? '' : '<button class="link" onclick="MOSTRAR_DOM=true;pintarHorario()">+ Mostrar domingo</button>') + '</div>';
+  $('#aj-hor').innerHTML = h;
+}
+function guardarCelda(d, hr, on, cupos) {
+  return api('guardarHorario', { dia_semana: d, inicio: hr, cupos: cupos || cuposFila(hr), activo: on ? 'si' : 'no' });
+}
+function toggleHor(d, hr, btn) {
+  var on = !celda(d, hr);
+  btn.disabled = true; btn.classList.toggle('on', on); btn.textContent = on ? '✓' : '+';
+  var cup = cuposFila(hr);
+  guardarCelda(d, hr, on, cup).then(function () {
+    if (on) HOR.push({ dia_semana: d, inicio: hr, cupos: cup }); else HOR = HOR.filter(function (x) { return !(x.dia_semana === d && x.inicio === hr); });
+    toast((on ? 'Agregada: ' : 'Quitada: ') + DSEM_C[d] + ' ' + hr); pintarHorario();
+  }).catch(function () { pintarHorario(); });
+}
+function enCadena(tareas) { return tareas.reduce(function (p, t) { return p.then(t); }, Promise.resolve()); }
+function cuposHor(hr, n) {
+  n = parseInt(n, 10); if (!(n > 0)) return toast('Escribe un número de cupos');
+  var celdas = HOR.filter(function (x) { return x.inicio === hr; });
+  if (!celdas.length) { CUPOS_DEF = n; return; }
+  toast('Guardando cupos…');
+  enCadena(celdas.map(function (x) { return function () { return guardarCelda(x.dia_semana, hr, true, n).then(function () { x.cupos = n; }); }; }))
+    .then(function () { toast(hr + ': ' + n + ' cupos en todos sus días'); pintarHorario(); });
+}
+function filaHor(hr, activar) {
+  var dias = activar ? [1, 2, 3, 4, 5].filter(function (d) { return !celda(d, hr); }) : HOR.filter(function (x) { return x.inicio === hr; }).map(function (x) { return x.dia_semana; });
+  if (!dias.length) return toast(activar ? 'Ya está de lunes a viernes' : 'No hay clases a esa hora');
+  if (!activar && !confirm('¿Quitar todas las clases de las ' + hr + '?')) return;
+  var cup = cuposFila(hr); toast('Guardando…');
+  enCadena(dias.map(function (d) { return function () { return guardarCelda(d, hr, activar, cup); }; })).then(function () {
+    if (activar) dias.forEach(function (d) { HOR.push({ dia_semana: d, inicio: hr, cupos: cup }); });
+    else { HOR = HOR.filter(function (x) { return x.inicio !== hr; }); HORAS_EXTRA = HORAS_EXTRA.filter(function (x) { return x !== hr; }); }
+    toast(activar ? hr + ' agregada de lunes a viernes' : 'Quitadas las clases de las ' + hr); pintarHorario();
+  });
+}
+function nuevaHora() {
+  var hr = val('h-nueva'); if (!/^\d{2}:\d{2}$/.test(hr)) return toast('Elige una hora');
+  if (horasHorario().indexOf(hr) < 0) HORAS_EXTRA.push(hr);
+  pintarHorario(); toast('Ahora marca los días de las ' + hr);
+}
 function campo(t, k, v, ph) { return '<label class="campo"><span>' + t + '</span><input class="entrada aj" data-k="' + k + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '></label>'; }
 function guardarAjustes() {
   var v = {}; document.querySelectorAll('.aj').forEach(function (e) { v[e.dataset.k] = e.value; });
