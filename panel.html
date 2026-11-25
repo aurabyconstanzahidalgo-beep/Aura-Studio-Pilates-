@@ -347,11 +347,46 @@ function pintarAlumnas() {
 function importarLista() {
   modal('<h3>Importar alumnas</h3><p class="sub">Una alumna por línea: <b>Nombre; correo; plan; clases que le quedan; fecha de inicio (AAAA-MM-DD)</b>. Solo el correo es obligatorio. ' +
     'El plan cuenta como saldo que traía, no como venta nueva.</p>' +
+    '<label class="btn claro peq" style="margin-bottom:.6rem;cursor:pointer">Subir archivo (.txt, .csv o Excel)<input type="file" accept=".txt,.csv,.xlsx,.xls,text/plain,text/csv" style="display:none" onchange="leerArchivo(this)"></label>' +
     '<textarea class="entrada" id="imp-t" style="min-height:220px;font-size:.85rem" placeholder="Antonia Rojo; anto.b.rojo19@gmail.com; Equilibrio; 7; 2026-11-23\nCarla Tapia; ctapia.c@hotmail.com"></textarea>' +
     '<label class="campo" style="margin-top:.8rem"><span>PIN inicial para todas</span><input class="entrada" id="imp-p" inputmode="numeric" maxlength="4" value="1234"></label>' +
     '<label class="check"><input type="checkbox" id="imp-m" checked><span>Mandarle a cada una un correo de bienvenida con el link de la app y su PIN</span></label>' +
     '<p class="mini" id="imp-n"></p><div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="hacerImport()">Importar</button></div>');
   $('#imp-t').addEventListener('input', function () { $('#imp-n').textContent = leerLista().length + ' alumnas detectadas'; });
+}
+function leerArchivo(input) {
+  var f = input.files[0]; if (!f) return;
+  var poner = function (lineas) {
+    var t = $('#imp-t'); t.value = (t.value.trim() ? t.value.trim() + '\n' : '') + lineas.join('\n');
+    t.dispatchEvent(new Event('input')); toast(leerLista().length + ' alumnas leídas del archivo');
+  };
+  var filaATexto = function (fila) {
+    return fila.map(function (c) {
+      if (c instanceof Date) return c.toISOString().slice(0, 10);
+      return String(c == null ? '' : c).replace(/;/g, ',').trim();
+    }).join('; ').replace(/(;\s*)+$/, '');
+  };
+  if (/\.xlsx?$/i.test(f.name)) {
+    var usar = function () {
+      f.arrayBuffer().then(function (buf) {
+        var wb = XLSX.read(buf, { type: 'array', cellDates: true }), filas = [];
+        wb.SheetNames.forEach(function (n) { filas = filas.concat(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true })); });
+        poner(filas.filter(function (r) { return r.some(function (c) { return String(c).indexOf('@') > 0; }); }).map(filaATexto));
+      }).catch(function () { toast('No se pudo leer el Excel'); });
+    };
+    if (window.XLSX) return usar();
+    var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    sc.onload = usar; sc.onerror = function () { toast('No se pudo cargar el lector de Excel. Guárdalo como .csv y súbelo.'); };
+    document.head.appendChild(sc); return;
+  }
+  var r = new FileReader();
+  r.onload = function () {
+    var texto = String(r.result).replace(/^\ufeff/, '');
+    poner(texto.split(/\r?\n/).filter(function (l) { return l.indexOf('@') > 0; }).map(function (l) {
+      return /\.csv$/i.test(f.name) && l.indexOf(';') < 0 ? l.split(/,|\t/).map(function (c) { return c.replace(/^"|"$/g, '').trim(); }).join('; ') : l.trim();
+    }));
+  };
+  r.readAsText(f, 'utf-8');
 }
 function leerLista() {
   return val('imp-t').split(/\n+/).map(function (l) {
