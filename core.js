@@ -83,6 +83,10 @@ var AuraCore = (function () {
   function horaDe(ms) { var d = new Date(ms); return pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); }
   function sellos(ms) { return fechaDe(ms) + ' ' + horaDe(ms); }
   function sumarDias(fecha, n) { return fechaDe(msDe(fecha) + n * DIA); }
+  function normHora(h) {
+    var m = String(h || '').match(/(\d{1,2}):(\d{2})/);
+    return m ? pad(+m[1]) + ':' + m[2] : String(h || '');
+  }
   function sumarMin(h, m) { return horaDe(msDe('2000-01-01', h) + m * MIN); }
   function diaSemana(fecha) { var d = new Date(msDe(fecha)).getUTCDay(); return d === 0 ? 7 : d; } // 1=lun..7=dom
   function lunesDe(fecha) { return sumarDias(fecha, 1 - diaSemana(fecha)); }
@@ -158,13 +162,13 @@ var AuraCore = (function () {
       var dow = String(diaSemana(fecha)), lista = {};
       db.rows('Horario').forEach(function (h) {
         if (String(h.activo) === 'no' || String(h.dia_semana) !== dow) return;
-        var id = fecha + 'T' + h.inicio;
-        lista[id] = { id: id, fecha: fecha, inicio: h.inicio, fin: h.fin, tipo: h.tipo,
+        var ini = normHora(h.inicio), id = fecha + 'T' + ini;
+        lista[id] = { id: id, fecha: fecha, inicio: ini, fin: normHora(h.fin) || sumarMin(ini, 50), tipo: h.tipo,
           profesora_id: h.profesora_id, cupos: num(h.cupos) || num(cfg('cupos_por_clase')), estado: 'normal', motivo: '' };
       });
       db.rows('Clases').forEach(function (c) {
         if (String(c.fecha) !== fecha) return;
-        var id = c.id || (fecha + 'T' + c.inicio);
+        var id = c.id ? String(c.id).split('T')[0] + 'T' + normHora(String(c.id).split('T')[1]) : (fecha + 'T' + normHora(c.inicio));
         var base = lista[id] || { id: id, fecha: fecha, inicio: c.inicio, fin: c.fin || sumarMin(c.inicio, 50),
           tipo: c.tipo || 'Clase especial', profesora_id: c.profesora_id || 'U1', cupos: num(cfg('cupos_por_clase')), estado: 'especial' };
         if (c.cupos !== '' && c.cupos !== undefined && c.cupos !== null) base.cupos = num(c.cupos) || base.cupos;
@@ -177,7 +181,8 @@ var AuraCore = (function () {
         .sort(function (a, b) { return a.inicio < b.inicio ? -1 : 1; });
     }
     function clase(id) {
-      var fecha = String(id).split('T')[0];
+      var partes = String(id).split('T'); id = partes[0] + 'T' + normHora(partes[1]);
+      var fecha = partes[0];
       var c = clasesDelDia(fecha).filter(function (x) { return x.id === id; })[0];
       if (!c) throw err('clase', 'Esa clase no existe.');
       return c;
@@ -812,6 +817,30 @@ var AuraCore = (function () {
           return { fecha: f, clases: activas.length, feriado: cs.length > 0 && !activas.length,
             reservas: porFecha[f] || 0, cupos: activas.reduce(function (t, c) { return t + c.cupos; }, 0) };
         }) };
+      },
+
+      notificaciones: function (a, s) {
+        soloPanel(s);
+        var tipos = { reservar: 'reservó', cancelar: 'canceló', serie: 'reservó su horario del mes', espera: 'se anotó en lista de espera', espera_asignada: 'tomó un cupo liberado', registro: 'se registró en la app' };
+        var al = {}; db.rows('Alumnas').forEach(function (x) { al[x.id] = x; });
+        var DS = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+        var out = [];
+        db.rows('Log').forEach(function (l) {
+          if (!tipos[l.accion]) return;
+          var quien = l.accion === 'espera_asignada' ? String(l.detalle).split(' → ')[1] : l.usuario;
+          var cid = String(l.detalle).split(' ')[0], texto = '';
+          if (/^\d{4}-\d{2}-\d{2}T/.test(cid)) {
+            var f = cid.split('T'); texto = DS[diaSemana(f[0])] + ' ' + (+f[0].slice(8)) + '/' + (+f[0].slice(5, 7)) + ' · ' + normHora(f[1]);
+            if (l.accion === 'cancelar' && /tardía/.test(l.detalle)) texto += ' (tarde, se descuenta)';
+          } else if (l.accion === 'serie') {
+            var p = String(l.detalle).split(' '); texto = 'todos los ' + DS[+p[0]] + ' ' + normHora(p[1]);
+          }
+          out.push({ fecha: l.fecha, accion: l.accion, alumna_id: quien, nombre: (al[quien] || {}).nombre || 'Alumna', foto: (al[quien] || {}).foto || '',
+            texto: tipos[l.accion] + (texto ? ' ' + texto : '') });
+        });
+        out.sort(function (x, y) { return x.fecha < y.fecha ? 1 : -1; });
+        var desde = String(a.desde || '');
+        return { ahora: sellos(ahora()), nuevas: desde ? out.filter(function (n) { return n.fecha > desde; }).length : out.length, lista: out.slice(0, 60) };
       },
 
       /* ----- Panel: horario, feriados, avisos ----- */

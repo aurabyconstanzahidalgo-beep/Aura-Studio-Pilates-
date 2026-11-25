@@ -9,7 +9,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="aura.css">
 <style>
   .barra-sup { background: #fff; border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 10; }
@@ -75,6 +75,9 @@
   .hor-dia b { display: block; margin-bottom: .35rem; }
   .pill { display: inline-flex; align-items: center; gap: .3rem; background: var(--lavanda); color: var(--morado-osc); border-radius: 999px; padding: .3rem .4rem .3rem .75rem; margin: 0 .3rem .35rem 0; font-weight: 800; font-size: .85rem; }
   .pill button { border: 0; background: rgba(255,255,255,.7); color: var(--alerta); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: 800; }
+  .notif-n { position: absolute; top: 2px; right: 0; background: var(--alerta); color: #fff; font-size: .62rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
+  .notif-nueva { background: #FCF3F4; border-radius: 10px; padding-left: .4rem; padding-right: .4rem; }
+  .cl-cab .h, .rap-h { font-variant-numeric: lining-nums; }
   .soporte-flot { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
@@ -135,6 +138,7 @@
       <button data-t="reportes" onclick="tab('reportes')" class="solo-duena">Reportes</button>
       <button data-t="tienda" onclick="tab('tienda')">Tienda y eventos</button>
       <button data-t="ajustes" onclick="tab('ajustes')" class="solo-duena">Ajustes</button>
+      <button onclick="verNotif()" id="campana" title="Notificaciones" style="position:relative">🔔<span id="notif-n" class="notif-n oculto"></span></button>
       <button onclick="miClave()">Mi clave</button>
       <button onclick="salir()" title="Salir">Salir</button>
     </div>
@@ -199,9 +203,31 @@ function refrescarPub() { return Aura.llamar('publico').then(function (p) { pub 
 function empezar() {
   ir('app');
   document.querySelectorAll('.solo-duena').forEach(function (b) { b.classList.toggle('oculto', rol !== 'dueña'); });
+  revisarNotif(); clearInterval(notifTimer); notifTimer = setInterval(revisarNotif, 60000);
   refrescarPub().then(function () { fecha = fecha || hoy; mesSel = mesSel || hoy.slice(0, 7); tabActual = 'dia'; AuraNav.base({ tab: 'dia' }); tab('dia', true); });
 }
 
+var NOTIF_K = 'aura_notif_visto', notifTimer = null;
+function revisarNotif() {
+  if (!token) return;
+  Aura.llamar('notificaciones', { desde: localStorage.getItem(NOTIF_K) || '' }, token).then(function (r) {
+    window._notif = r; var b = $('#notif-n');
+    if (r.nuevas > 0) { b.textContent = r.nuevas > 9 ? '9+' : r.nuevas; b.classList.remove('oculto'); } else b.classList.add('oculto');
+    if (!localStorage.getItem(NOTIF_K)) localStorage.setItem(NOTIF_K, r.ahora);
+  }).catch(function () {});
+}
+function verNotif() {
+  var r = window._notif, visto = localStorage.getItem(NOTIF_K) || '';
+  var lista = r ? r.lista : [];
+  modal('<h3>Notificaciones</h3><p class="sub">Reservas, cancelaciones y registros de tus alumnas.</p><div style="max-height:60vh;overflow:auto">' +
+    (lista.length ? lista.map(function (n) {
+      var f = String(n.fecha), nueva = f > visto;
+      return '<div class="persona' + (nueva ? ' notif-nueva' : '') + '" onclick="ficha(\'' + n.alumna_id + '\')" style="cursor:pointer">' + av(n.nombre, n.foto) +
+        '<div class="datos"><div><b>' + esc(n.nombre) + '</b> ' + esc(n.texto) + '</div><div class="mini">' + (f.slice(0, 10) === hoy ? 'Hoy' : fCorta(f.slice(0, 10))) + ' · ' + f.slice(11, 16) + '</div></div>' +
+        (n.accion === 'cancelar' ? '<span class="chip rosa">Canceló</span>' : n.accion === 'registro' ? '<span class="chip">Nueva</span>' : '<span class="chip salvia">Reserva</span>') + '</div>';
+    }).join('') : '<p class="vacio">Todavía no hay movimientos.</p>') + '</div>');
+  if (r) { localStorage.setItem(NOTIF_K, r.ahora); $('#notif-n').classList.add('oculto'); }
+}
 function miClave() {
   modal('<h3>Mi clave</h3><p class="sub">Cambia tu clave del panel. Si quieres, también tu usuario corto para entrar.</p>' +
     '<label class="campo"><span>Usuario (opcional)</span><input class="entrada" id="mc-u" autocapitalize="none" placeholder="aura"></label>' +
@@ -357,7 +383,7 @@ function dibujarIG() {
     var story = val('ig-fmt') === 'story', cup = val('ig-cup') === 'si';
     var W = 1080, H = story ? 1920 : 1350, cv = $('#ig'), x = cv.getContext('2d');
     cv.width = W; cv.height = H;
-    var serif = '"Cormorant Garamond", Georgia, serif', sans = '"Nunito Sans", Arial, sans-serif';
+    var serif = '"Playfair Display", Georgia, serif', sans = '"Montserrat", Arial, sans-serif';
     x.fillStyle = '#F4F3F2'; x.fillRect(0, 0, W, H);
     x.fillStyle = '#F8ECEE'; x.beginPath(); x.arc(W - 120, 110, 260, 0, 7); x.fill();
     x.beginPath(); x.arc(90, H - 60, 200, 0, 7); x.fill();
@@ -598,9 +624,9 @@ function grafico(serie) {
     var x0 = i * bw + bw * .18, w = bw * .3, hv = s.ventas / max * (H - 14), hg = s.gastos / max * (H - 14);
     out += '<rect x="' + x0 + '" y="' + (H - hv) + '" width="' + w + '" height="' + hv + '" rx="4" fill="#B76E79"><title>Ventas ' + plata(s.ventas) + '</title></rect>';
     out += '<rect x="' + (x0 + w + 3) + '" y="' + (H - hg) + '" width="' + w + '" height="' + hg + '" rx="4" fill="#C9C4C2"><title>Gastos ' + plata(s.gastos) + '</title></rect>';
-    out += '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 22) + '" text-anchor="middle" font-size="13" fill="#76706F" font-family="Nunito Sans, sans-serif">' + MESES[+s.mes.split('-')[1] - 1] + '</text>';
+    out += '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 22) + '" text-anchor="middle" font-size="13" fill="#76706F" font-family="Montserrat, sans-serif">' + MESES[+s.mes.split('-')[1] - 1] + '</text>';
   });
-  out += '<text x="2" y="12" font-size="11" fill="#76706F" font-family="Nunito Sans, sans-serif">' + plata(max) + '</text>';
+  out += '<text x="2" y="12" font-size="11" fill="#76706F" font-family="Montserrat, sans-serif">' + plata(max) + '</text>';
   return out + '</svg>';
 }
 function guardarGasto() {
@@ -708,7 +734,8 @@ VISTAS.ajustes = function () {
     var c = r[0], hor = r[1];
     var h = '<div class="dos"><div class="tarjeta"><h2 class="sec" style="margin-top:0">Datos del estudio</h2>' +
       campo('WhatsApp del estudio', 'whatsapp', c.whatsapp, '56947483746') + campo('Instagram (sin @)', 'instagram', c.instagram) +
-      '<label class="campo"><span>Datos de transferencia</span><textarea class="entrada aj" data-k="transferencia" placeholder="Nombre, RUT, banco, tipo y número de cuenta, correo">' + esc(c.transferencia) + '</textarea></label>' +
+      '<label class="campo"><span>Datos de transferencia</span><textarea class="entrada aj" data-k="transferencia" style="min-height:120px" placeholder="Nombre, RUT, banco, tipo y número de cuenta, correo">' + esc(c.transferencia) + '</textarea></label>' +
+      botonesTexto('transferencia') +
       campo('WhatsApp de soporte técnico', 'soporte', c.soporte) + '</div>' +
       '<div class="tarjeta"><h2 class="sec" style="margin-top:0">Reglas de reserva</h2>' +
       '<label class="campo"><span>Cierre de reservas</span><select class="entrada aj" data-k="cierre_modo"><option value="dia_anterior"' + (c.cierre_modo === 'dia_anterior' ? ' selected' : '') + '>Hasta una hora del día anterior</option><option value="horas"' + (c.cierre_modo === 'horas' ? ' selected' : '') + '>Hasta X horas antes de la clase</option></select></label>' +
@@ -717,7 +744,7 @@ VISTAS.ajustes = function () {
       '<div class="fila2">' + campo('Cupos por clase (nuevas)', 'cupos_por_clase', c.cupos_por_clase) +
       '<label class="campo"><span>Sin clases disponibles</span><select class="entrada aj" data-k="permitir_sin_saldo"><option value="si"' + (c.permitir_sin_saldo === 'si' ? ' selected' : '') + '>Reserva y queda debiendo</option><option value="no"' + (c.permitir_sin_saldo === 'no' ? ' selected' : '') + '>No puede reservar</option></select></label></div></div></div>';
     h += '<div class="tarjeta" style="margin-top:1rem"><h2 class="sec" style="margin-top:0">Políticas de Aura</h2><p class="mini" style="margin-top:-.2rem">Las alumnas las ven en la app y las aceptan al registrarse. Una regla por línea.</p>' +
-      '<textarea class="entrada aj" data-k="politicas" style="min-height:180px">' + esc(c.politicas) + '</textarea></div>';
+      '<textarea class="entrada aj" data-k="politicas" style="min-height:220px">' + esc(c.politicas) + '</textarea>' + botonesTexto('politicas') + '</div>';
     h += '<div class="acciones"><button class="btn" onclick="guardarAjustes()">Guardar ajustes</button></div>';
     h += '<h2 class="sec">Google Drive</h2><div class="tarjeta" id="aj-drive"><div class="cargando">Revisando Drive…</div></div>';
     h += '<h2 class="sec">Horario semanal</h2><div class="tarjeta">';
@@ -743,6 +770,22 @@ VISTAS.ajustes = function () {
     }).catch(function () { $('#aj-drive').innerHTML = '<p class="mini">No se pudo revisar Drive.</p>'; });
   });
 };
+var TEXTOS_AURA = { transferencia: "Nombre: Constanza Hidalgo Ramírez\nBanco: Mercado Pago\nTipo de cuenta: Vista\nN° de cuenta: 1007446024\nRUT: 16.303.811-0", politicas: "El plan contratado es mensual: las clases deben utilizarse dentro de los 30 días posteriores a la compra.\nPodrás agendar todas tus clases desde la aplicación, eligiendo el horario que más te acomode. Se reserva hasta las 21:00 del día anterior.\nEl plazo mínimo para cancelar una clase desde la aplicación es de 12 horas de anticipación. Pasado ese tiempo, la clase no podrá ser reembolsada a tu plan.\nTe recomendamos llegar 5 o 10 minutos antes de tu clase para poder prepararte.\nUna vez iniciada la clase, el tiempo de tolerancia es de 5 minutos. Transcurrido ese plazo no podrás acceder a la sesión para no interrumpirla, y la clase se contará como asistida y se descontará de tu plan.\nTe sugerimos no utilizar tu celular durante la clase, para que te puedas enfocar 100% en la sesión.\nUna vez finalizada la clase, no olvides limpiar tu reformer y los implementos utilizados." };
+function botonesTexto(k) {
+  return '<div class="acciones" style="margin:.2rem 0 .6rem"><label class="btn claro peq" style="cursor:pointer">Subir archivo (.txt)<input type="file" accept=".txt,text/plain" style="display:none" onchange="subirTexto(this,\'' + k + '\')"></label>' +
+    '<button class="btn borde peq" onclick="usarTextoAura(\'' + k + '\')">Cargar ' + (k === 'politicas' ? 'las políticas' : 'los datos') + ' de Aura</button></div>';
+}
+function ponerTexto(k, texto) {
+  var t = document.querySelector('.aj[data-k="' + k + '"]'); if (!t) return;
+  t.value = String(texto).replace(/^\ufeff/, '').replace(/\r\n/g, '\n').trim();
+  var v = {}; v[k] = t.value;
+  api('guardarAjustes', { valores: v }).then(function () { toast(k === 'politicas' ? 'Políticas guardadas' : 'Datos de transferencia guardados'); refrescarPub(); });
+}
+function subirTexto(input, k) {
+  var f = input.files[0]; if (!f) return;
+  var r = new FileReader(); r.onload = function () { ponerTexto(k, r.result); }; r.readAsText(f, 'utf-8');
+}
+function usarTextoAura(k) { ponerTexto(k, TEXTOS_AURA[k]); }
 function campo(t, k, v, ph) { return '<label class="campo"><span>' + t + '</span><input class="entrada aj" data-k="' + k + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '></label>'; }
 function guardarAjustes() {
   var v = {}; document.querySelectorAll('.aj').forEach(function (e) { v[e.dataset.k] = e.value; });

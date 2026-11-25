@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Aura">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="aura.css">
 <style>
   body { min-height: 100vh; }
@@ -59,7 +59,7 @@
   .clase { background: #fff; border-radius: 18px; padding: 1rem; box-shadow: var(--sombra); }
   .clase.mia { box-shadow: inset 0 0 0 2px var(--morado), var(--sombra); }
   .clase .top { display: flex; justify-content: space-between; align-items: flex-start; gap: .6rem; }
-  .clase .hora { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; line-height: 1; }
+  .clase .hora { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; line-height: 1; font-variant-numeric: lining-nums; }
   .clase .tipo { font-size: .85rem; color: var(--suave); margin-top: .25rem; }
   .puntos { display: flex; gap: 4px; margin-top: .75rem; }
   .puntos i { width: 100%; height: 6px; border-radius: 6px; background: var(--lavanda); }
@@ -114,6 +114,23 @@
   .quienes span.n.tu { background: var(--lavanda); color: var(--morado-osc); font-weight: 800; }
   .quienes span.n .av { width: 22px; height: 22px; font-size: .58rem; border: 0; margin: 0; }
   .serie-btn { width: 100%; margin: .2rem 0 1rem; }
+  .rapida { background: rgba(255,255,255,.94); border-radius: 20px; box-shadow: var(--sombra); padding: 1rem; margin-bottom: .8rem; }
+  .rap-cab { display: flex; gap: .8rem; align-items: center; margin-bottom: .6rem; }
+  .rap-n { width: 52px; height: 52px; border-radius: 16px; background: var(--morado); color: #fff; display: grid; place-items: center; font-family: var(--serif); font-size: 1.8rem; font-weight: 600; }
+  .rap-s { font-size: .8rem; color: var(--suave); }
+  .rap-dia { border-top: 1px solid var(--linea); }
+  .rap-dt { width: 100%; display: flex; justify-content: space-between; align-items: center; background: none; border: 0; padding: .7rem .1rem; font: inherit; font-weight: 800; color: var(--tinta); cursor: pointer; }
+  .rap-meta { font-size: .76rem; font-weight: 700; color: var(--suave); }
+  .rap-meta i { font-style: normal; display: inline-block; transition: transform .15s; margin-left: .2rem; }
+  .rap-dia.abierto .rap-meta i { transform: rotate(90deg); }
+  .rap-fila { display: flex; align-items: center; gap: .7rem; padding: .55rem .5rem; border-radius: 12px; margin-bottom: .3rem; background: #FAF8F7; }
+  .rap-fila.mia { background: var(--lavanda); }
+  .rap-h { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; width: 58px; flex: none; font-variant-numeric: lining-nums; }
+  .rap-q { flex: 1; min-width: 0; }
+  .rap-av { display: flex; }
+  .rap-av .av { width: 22px; height: 22px; font-size: .55rem; border: 2px solid #fff; margin-right: -6px; }
+  .rap-nom { font-size: .76rem; color: var(--tinta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .15rem; }
+  .rap-cup { font-size: .7rem; color: var(--suave); }
   .prod { display: flex; gap: .9rem; align-items: center; }
   .prod .img { width: 72px; height: 72px; border-radius: 16px; background: var(--lavanda) center/cover; flex: none; display: grid; place-items: center; font-family: var(--serif); font-size: 1.4rem; color: var(--morado); }
   .prod .img.con-foto { color: transparent; }
@@ -121,6 +138,11 @@
   .perfil-top { display: flex; gap: 1rem; align-items: center; margin: .4rem 0 1rem; }
   .perfil-top .saludo { margin: 0; }
   nav.abajo button { font-size: .66rem; }
+  .inst .mini-p { font-size: .82rem; color: var(--suave); margin-top: .15rem; }
+  .pasos { margin: .8rem 0 .2rem; padding-left: 1.2rem; font-size: .88rem; line-height: 1.55; }
+  .pasos li { margin-bottom: .3rem; }
+  .tabs-inst { margin-top: .8rem; font-size: .9rem; }
+  .tabs-inst .pasos { margin-top: .3rem; margin-bottom: .7rem; }
 </style>
 <script src="config.js"></script>
 <script src="core.js"></script>
@@ -317,15 +339,55 @@ function vInicio() {
 function vClases() {
   var c = $('#contenido');
   c.innerHTML = '<h1 class="saludo" style="font-size:1.7rem">Reserva tu clase<small>Pilates reformer full body · 50 min · se reserva ' + esc(pub.texto_cierre) + '</small></h1>' +
-    '<button class="btn claro serie-btn" onclick="abrirSerie()">Reservar mi horario del mes</button><div class="dias" id="dias"></div><div id="lista-clases" class="lista"><div class="cargando">Cargando horario…</div></div>';
+    '<div id="rapida"></div><button class="btn claro serie-btn" onclick="abrirSerie()">Reservar mi horario del mes</button><div class="dias" id="dias"></div><div id="lista-clases" class="lista"><div class="cargando">Cargando horario…</div></div>';
   api('clases', { dias: pub.dias_adelanto + 1 }).then(function (dias) {
     cacheClases = dias;
     if (!diaSel || !dias.some(function (d) { return d.fecha === diaSel; })) {
       var conCupo = dias.filter(function (d) { return d.clases.some(function (k) { return k.abierta; }); })[0];
       diaSel = (conCupo || dias[0]).fecha;
     }
-    pintarDias(); pintarClases();
+    pintarRapida(); pintarDias(); pintarClases();
   });
+}
+var DIA_ABIERTO = null;
+function pintarRapida() {
+  var cont = $('#rapida'); if (!cont) return;
+  var dias = (cacheClases || []).slice(0, 7).map(function (d) {
+    return { fecha: d.fecha, clases: d.clases.filter(function (k) { return k.mi_reserva || (k.abierta && k.estado !== 'feriado'); }) };
+  }).filter(function (d) { return d.clases.length; });
+  var mias = 0; dias.forEach(function (d) { d.clases.forEach(function (k) { if (k.mi_reserva) mias++; }); });
+  if (DIA_ABIERTO === null || (DIA_ABIERTO && !dias.some(function (d) { return d.fecha === DIA_ABIERTO; }))) {
+    var libre = dias.filter(function (d) { return d.clases.some(function (k) { return !k.mi_reserva && k.libres > 0; }); })[0];
+    DIA_ABIERTO = (libre || dias[0] || {}).fecha || '';
+  }
+  var h = '<div class="rapida"><div class="rap-cab"><div><div class="rap-n">' + yo.saldo + '</div></div><div><b>' + (yo.saldo ? 'Tienes ' + yo.saldo + (yo.saldo === 1 ? ' clase disponible' : ' clases disponibles') : 'No tienes clases disponibles') + '</b>' +
+    '<div class="rap-s">' + (yo.saldo ? 'Agenda tus clases de esta semana con un toque' : '<a href="#" onclick="tab(\'tienda\');return false">Compra o renueva tu pack</a>') + (mias ? ' · ' + mias + ' ya ' + (mias === 1 ? 'agendada' : 'agendadas') : '') + '</div></div></div>';
+  if (!dias.length) h += '<p class="rap-s" style="padding:.4rem 0 0">No quedan horarios abiertos esta semana.</p>';
+  dias.forEach(function (d) {
+    var o = dObj(d.fecha), abierto = d.fecha === DIA_ABIERTO;
+    var mi = d.clases.filter(function (k) { return k.mi_reserva; }).length;
+    h += '<div class="rap-dia' + (abierto ? ' abierto' : '') + '"><button class="rap-dt" onclick="DIA_ABIERTO=DIA_ABIERTO===\'' + d.fecha + '\'?\'\':\'' + d.fecha + '\';pintarRapida()">' +
+      '<span>' + (d.fecha === pub.hoy ? 'Hoy' : mayus(DIAS_L[o.getUTCDay()])) + ' ' + o.getUTCDate() + '</span><span class="rap-meta">' + (mi ? '✓ ' + mi + ' agendada' + (mi > 1 ? 's' : '') + ' · ' : '') + d.clases.length + ' horarios <i>›</i></span></button>';
+    if (abierto) h += d.clases.map(function (k) {
+      var nombres = k.asistentes.map(function (a) { return a.nombre; });
+      var quien = nombres.length ? nombres.slice(0, 3).join(', ') + (nombres.length > 3 ? ' +' + (nombres.length - 3) : '') : 'Nadie todavía';
+      var boton = k.mi_reserva ? '<span class="chip">✓ Tuya</span>' : k.libres === 0 ? '<span class="chip rosa">Llena</span>' :
+        '<button class="btn peq" onclick="reservaRapida(this,\'' + k.id + '\')">Reservar</button>';
+      return '<div class="rap-fila' + (k.mi_reserva ? ' mia' : '') + '"><div class="rap-h">' + k.inicio + '</div><div class="rap-q"><div class="rap-av">' +
+        k.asistentes.slice(0, 4).map(function (a) { return '<span class="av" data-foto="' + esc(a.foto) + '">' + iniciales(a.yo ? yo.perfil.nombre : a.nombre) + '</span>'; }).join('') + '</div>' +
+        '<div class="rap-nom">' + esc(quien) + '</div><div class="rap-cup">' + k.libres + (k.libres === 1 ? ' cupo libre' : ' cupos libres') + '</div></div>' + boton + '</div>';
+    }).join('');
+    h += '</div>';
+  });
+  cont.innerHTML = h + '</div>';
+  Aura.pintarFotos(cont, token);
+}
+function reservaRapida(btn, id) {
+  btn.disabled = true; btn.textContent = '…';
+  api('reservar', { clase_id: id }).then(function (r) {
+    var f = id.split('T'); toast('✓ Reservada: ' + DIAS_L[dObj(f[0]).getUTCDay()] + ' ' + (+f[0].slice(8)) + ' a las ' + f[1] + (r.sin_plan ? ' (queda pendiente de pago)' : ''));
+    return cargarYo().then(vClases);
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Reservar'; });
 }
 function abrirSerie() {
   var horas = {};
@@ -505,6 +567,7 @@ function vPerfil() {
     '<button class="btn claro peq" onclick="guardarSalud()">Guardar</button></div>' +
     '<div class="tarjeta" style="margin-top:.8rem"><b>Cambiar PIN</b><div class="fila2" style="margin-top:.7rem"><input class="entrada pin" id="pa" type="password" inputmode="numeric" maxlength="4" placeholder="Actual"><input class="entrada pin" id="pn" type="password" inputmode="numeric" maxlength="4" placeholder="Nuevo"></div>' +
     '<button class="btn claro peq" style="margin-top:.7rem" onclick="cambiarPin()">Cambiar PIN</button></div>' +
+    tarjetaInstalar() +
     '<button class="btn claro bloque" style="margin-top:1rem" onclick="verPoliticas()">Políticas de Aura</button>' +
     (pub.whatsapp ? '<a class="btn ws bloque" style="margin-top:.7rem" target="_blank" href="' + ws('Hola Constanza, ') + '">Escribir a Aura por WhatsApp</a>' : '') +
     (pub.soporte ? '<a class="btn borde bloque" style="margin-top:.7rem" target="_blank" href="https://wa.me/' + pub.soporte + '?text=' + encodeURIComponent('Hola, tengo un problema con la app de Aura: ') + '">¿Problemas con la app? Soporte</a>' : '') +
@@ -514,6 +577,32 @@ function vPerfil() {
   $('#sw-nombre').addEventListener('change', function (e) {
     api('guardarPerfil', { mostrar_nombre: e.target.checked }).then(function (r) { yo.perfil = r.perfil; toast(e.target.checked ? 'Tu nombre se muestra' : 'Tu nombre queda oculto'); });
   });
+}
+/* ---------- Instalar como app ---------- */
+var promptInstalar = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); promptInstalar = e; var b = $('#b-instalar'); if (b) b.classList.remove('oculto'); });
+window.addEventListener('appinstalled', function () { toast('¡Listo! Aura quedó en tu pantalla de inicio'); });
+function yaInstalada() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function tarjetaInstalar() {
+  if (yaInstalada()) return '<div class="tarjeta inst" style="margin-top:.8rem"><b>✓ Ya tienes Aura como app</b><div class="mini-p">La abres desde el ícono en tu pantalla de inicio.</div></div>';
+  var ua = navigator.userAgent, ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var iosOtro = ios && /CriOS|FxiOS|EdgiOS|Instagram|FBAN|FBAV/.test(ua);
+  var compartir = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+  var mas = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>';
+  var pasosIos = '<ol class="pasos"><li>Abre esta página en <b>Safari</b>.</li><li>Toca el botón <b>Compartir</b> ' + compartir + ' (abajo al centro, o arriba en iPad).</li>' +
+    '<li>Baja y toca <b>Agregar a inicio</b> ' + mas + '.</li><li>Toca <b>Agregar</b>. El ícono de Aura queda en tu pantalla.</li></ol>';
+  var pasosAndroid = '<ol class="pasos"><li>Abre esta página en <b>Chrome</b>.</li><li>Toca el menú <b>⋮</b> (arriba a la derecha).</li>' +
+    '<li>Toca <b>Instalar app</b> o <b>Agregar a pantalla principal</b>.</li><li>Confirma. El ícono de Aura queda junto a tus apps.</li></ol>';
+  return '<div class="tarjeta inst" style="margin-top:.8rem"><div style="display:flex;gap:.8rem;align-items:center"><img src="icon-192.png" alt="" style="width:52px;height:52px;border-radius:14px;box-shadow:var(--sombra)">' +
+    '<div><b>Ten Aura como app en tu celular</b><div class="mini-p">Se abre a pantalla completa, sin buscar el link, y entras directo.</div></div></div>' +
+    '<button id="b-instalar" class="btn bloque' + (promptInstalar ? '' : ' oculto') + '" style="margin-top:.9rem" onclick="instalarApp()">Instalar app</button>' +
+    (iosOtro ? '<div class="aviso deuda" style="margin:.9rem 0 0">En iPhone se instala solo desde <b>Safari</b>. Copia el link y ábrelo ahí.</div>' : '') +
+    (ios ? pasosIos : '<div class="tabs-inst"><b>Android</b>' + pasosAndroid + '<b>iPhone</b>' + pasosIos + '</div>') + '</div>';
+}
+function instalarApp() {
+  if (!promptInstalar) return;
+  promptInstalar.prompt();
+  promptInstalar.userChoice.then(function () { promptInstalar = null; var b = $('#b-instalar'); if (b) b.classList.add('oculto'); });
 }
 function subirMiFoto(input) {
   var f = input.files[0]; if (!f) return;
