@@ -77,6 +77,36 @@
   .pill button { border: 0; background: rgba(255,255,255,.7); color: var(--alerta); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: 800; }
   .soporte-flot { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
+
+  .cal-caja { padding: 1rem 1.1rem 1.1rem; }
+  .cal-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: .7rem; }
+  .cal-cab h2 { font-size: 1.6rem; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-dsem { text-align: center; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--suave); padding-bottom: .2rem; }
+  .cal-d { border: 0; border-radius: 12px; min-height: 64px; padding: .4rem .45rem; text-align: left; cursor: pointer; background: #FAF8F7; display: flex; flex-direction: column; justify-content: space-between; font: inherit; color: var(--tinta); transition: transform .08s; }
+  .cal-d:hover { transform: translateY(-1px); box-shadow: var(--sombra); }
+  .cal-d .num { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; line-height: 1; }
+  .cal-d .cnt { font-size: .72rem; font-weight: 800; color: var(--morado-osc); }
+  .cal-d.n1 { background: var(--lavanda); } .cal-d.n2 { background: #EFCDD3; } .cal-d.n3 { background: var(--morado); color: #fff; } .cal-d.n3 .cnt { color: #fff; }
+  .cal-d.nf { background: #ECE9E7; } .cal-d.nf .cnt { color: var(--suave); font-weight: 700; }
+  .cal-d.sin { opacity: .45; } .cal-d.pas { opacity: .6; }
+  .cal-d.hoy { box-shadow: inset 0 0 0 2px var(--morado); }
+  .cal-d.sel { outline: 3px solid var(--tinta); outline-offset: 1px; }
+  .cal-ley { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .75rem; color: var(--suave); margin-top: .8rem; }
+  .cal-ley i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: .3rem; vertical-align: -1px; }
+  .cal-ley .l1 { background: var(--lavanda); } .cal-ley .l3 { background: var(--morado); } .cal-ley .lf { background: #ECE9E7; }
+  @media (max-width: 640px) { .opc-cal { display: none; } .cal-d { min-height: 52px; padding: .35rem; } .cal-d .num { font-size: 1.05rem; } .cal { gap: 4px; } }
+  .lupa { position: relative; margin-bottom: .6rem; }
+  .lupa svg { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--suave); pointer-events: none; }
+  .lupa .entrada { padding-left: 2.6rem; }
+  .lista-al { background: rgba(255,255,255,.92); border-radius: 18px; box-shadow: var(--sombra); overflow: hidden; }
+  .al-fila { display: flex; align-items: center; gap: .7rem; width: 100%; border: 0; background: none; padding: .7rem .9rem; border-top: 1px solid var(--linea); cursor: pointer; font: inherit; color: inherit; text-align: left; }
+  .al-fila:first-child { border-top: 0; }
+  .al-fila:hover { background: #FCF6F7; }
+  .al-dat { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .al-dat .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .al-der { display: flex; align-items: center; gap: .5rem; }
+  .flecha { font-size: 1.4rem; color: var(--suave); }
 </style>
 <script src="config.js"></script>
 <script src="core.js"></script>
@@ -187,14 +217,47 @@ function guardarClave() {
   api('cambiarClave', args).then(function () { cerrarModal(); toast('Clave actualizada'); });
 }
 
-/* =================== CLASES =================== */
-function moverDia(n) { fecha = Aura.util.sumarDias(fecha, n); VISTAS.dia(); }
+/* =================== CLASES (inicio) =================== */
+var mesCal = null;
+function moverDia(n) { fecha = Aura.util.sumarDias(fecha, n); mesCal = fecha.slice(0, 7); VISTAS.dia(); }
+function elegirFecha(f) { fecha = f; pintarCal(window._cal); cargarDia(); var d = $('#dia-cab'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 VISTAS.dia = function () {
-  var c = $('#cuerpo');
-  c.innerHTML = '<div class="nav-dia"><button class="redondo" onclick="moverDia(-1)">‹</button><h1>' + (fecha === hoy ? 'Hoy, ' + fLarga(fecha) : mayus(fLarga(fecha))) + '</h1>' +
-    (fecha !== hoy ? '<button class="btn claro peq" onclick="fecha=hoy;VISTAS.dia()">Hoy</button>' : '') + '<button class="redondo" onclick="moverDia(1)">›</button></div>' +
+  mesCal = mesCal || fecha.slice(0, 7);
+  $('#cuerpo').innerHTML =
+    '<div class="tarjeta cal-caja"><div class="cal-cab"><button class="redondo" onclick="mesCal=sumaMes(mesCal,-1);cargarCal()">‹</button>' +
+    '<h2 id="cal-tit"></h2><button class="redondo" onclick="mesCal=sumaMes(mesCal,1);cargarCal()">›</button></div>' +
+    '<div class="cal" id="cal"><div class="cargando" style="grid-column:1/-1">Cargando calendario…</div></div>' +
+    '<div class="cal-ley"><span><i class="l1"></i>Con reservas</span><span><i class="l3"></i>Casi lleno</span><span><i class="lf"></i>Feriado</span></div></div>' +
+    '<div class="nav-dia" id="dia-cab" style="margin-top:1.2rem"><button class="redondo" onclick="moverDia(-1)">‹</button><h1 id="dia-tit"></h1>' +
+    '<button class="redondo" onclick="moverDia(1)">›</button></div>' +
     '<div class="barra-acc"><button class="btn claro peq" onclick="abrirIG()">Horario para Instagram</button><button class="btn borde peq" onclick="feriadoDia()">Suspender el día (feriado)</button>' +
-    '<button class="btn borde peq" onclick="avisoTodas()">Enviar correo a todas</button></div><div id="dia-c"><div class="cargando">Cargando…</div></div>';
+    '<button class="btn borde peq" onclick="avisoTodas()">Enviar correo a todas</button></div><div id="dia-c"><div class="cargando">Cargando…</div></div>' +
+    '<h2 class="sec" style="margin-top:2rem">Tus alumnas</h2><div class="lupa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>' +
+    '<input class="entrada" id="qi" placeholder="Buscar alumna por nombre, RUT, correo o teléfono" oninput="pintarListaInicio()"></div><div id="lista-inicio"><div class="cargando">Cargando alumnas…</div></div>';
+  cargarCal(); cargarDia();
+  cargarAlumnas().then(pintarListaInicio);
+};
+function cargarCal() {
+  $('#cal-tit').textContent = nombreMes(mesCal);
+  api('calendario', { mes: mesCal }).then(function (c) { window._cal = c; pintarCal(c); })
+    .catch(function () { $('#cal').innerHTML = '<p class="mini" style="grid-column:1/-1">Actualiza el script (Core.gs) para ver el calendario.</p>'; });
+}
+function pintarCal(c) {
+  if (!c || !$('#cal')) return;
+  var h = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(function (d) { return '<div class="cal-dsem">' + d + '</div>'; }).join('');
+  var primero = (dObj(c.dias[0].fecha).getUTCDay() + 6) % 7;
+  for (var i = 0; i < primero; i++) h += '<div></div>';
+  c.dias.forEach(function (d) {
+    var oc = d.cupos ? d.reservas / d.cupos : 0, nivel = d.feriado ? 'f' : !d.reservas ? '0' : oc >= .75 ? '3' : oc >= .4 ? '2' : '1';
+    h += '<button class="cal-d n' + nivel + (d.fecha === c.hoy ? ' hoy' : '') + (d.fecha === fecha ? ' sel' : '') + (d.fecha < c.hoy ? ' pas' : '') + (!d.clases && !d.feriado ? ' sin' : '') + '" onclick="elegirFecha(\'' + d.fecha + '\')">' +
+      '<span class="num">' + (+d.fecha.slice(8)) + '</span>' +
+      (d.feriado ? '<span class="cnt">feriado</span>' : d.reservas ? '<span class="cnt">' + d.reservas + '<span class="opc-cal"> reservas</span></span>' : '') + '</button>';
+  });
+  $('#cal').innerHTML = h;
+}
+function cargarDia() {
+  $('#dia-tit').textContent = fecha === hoy ? 'Hoy, ' + fLarga(fecha) : mayus(fLarga(fecha));
+  $('#dia-c').innerHTML = '<div class="cargando">Cargando…</div>';
   api('dia', { fecha: fecha }).then(function (d) {
     var total = 0, cupos = 0, cumple = [];
     d.clases.forEach(function (k) { if (k.estado !== 'feriado') { total += k.ocupados; cupos += k.cupos; }
@@ -207,7 +270,20 @@ VISTAS.dia = function () {
     h += '<div class="grilla">' + d.clases.map(tarjetaClase).join('') + '</div>';
     $('#dia-c').innerHTML = h; Aura.pintarFotos($('#dia-c'), token);
   });
-};
+}
+function pintarListaInicio() {
+  var cont = $('#lista-inicio'); if (!cont) return;
+  var q = (val('qi') || '').toLowerCase().trim();
+  var l = alumnasCache.filter(function (a) { return !q || (a.nombre + ' ' + a.rut + ' ' + a.correo + ' ' + a.telefono).toLowerCase().indexOf(q) >= 0; });
+  cont.innerHTML = '<p class="mini" style="margin:.2rem 0 .7rem">' + (q ? l.length + ' de ' : '') + alumnasCache.length + ' alumnas</p>' +
+    (l.length ? '<div class="lista-al">' + l.map(function (a) {
+      return '<button class="al-fila" onclick="ficha(\'' + a.id + '\')">' + av(a.nombre, a.foto) + '<span class="al-dat"><b>' + esc(a.nombre) + '</b><span class="mini">' +
+        esc(a.correo || a.telefono || a.rut || '') + '</span></span><span class="al-der">' +
+        (a.estado === 'inactiva' ? '<span class="chip gris">inactiva</span>' : a.deudas ? '<span class="chip alerta">debe ' + a.deudas + '</span>' : a.saldo ? '<span class="chip salvia">' + a.saldo + ' clases</span>' : '<span class="chip gris">sin plan</span>') +
+        '<span class="flecha">›</span></span></button>';
+    }).join('') + '</div>' : '<div class="tarjeta vacio">No encontramos a nadie con "' + esc(q) + '".</div>');
+  Aura.pintarFotos(cont, token);
+}
 function tarjetaClase(k) {
   var sus = k.estado === 'feriado';
   var h = '<div class="tarjeta"><div class="cl-cab"><div><div class="h">' + k.inicio + '</div><div class="mini">' + esc(k.tipo) + ' · hasta ' + k.fin + '</div></div>' +
@@ -233,7 +309,7 @@ function tarjetaClase(k) {
     '<button class="btn claro peq" onclick="agregar(\'' + k.id + '\')">+ Agregar alumna</button><button class="btn borde peq" onclick="suspender(\'' + k.id + '\')">Suspender</button>') + '</div></div>';
   return h;
 }
-function marcar(id, estado) { api('asistencia', { reserva_id: id, estado: estado }).then(VISTAS.dia); }
+function marcar(id, estado) { api('asistencia', { reserva_id: id, estado: estado }).then(cargarDia); }
 function suspender(id) {
   modal('<h3>Suspender clase</h3><p class="sub">' + id.replace('T', ' · ') + '. Se cancelan las reservas, se devuelven las clases y les llega un correo.</p>' +
     '<label class="campo"><span>Motivo (lo ven las alumnas)</span><input class="entrada" id="motivo" value="Clase suspendida"></label>' +

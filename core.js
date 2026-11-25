@@ -799,6 +799,21 @@ var AuraCore = (function () {
         return out;
       },
 
+      calendario: function (a, s) {
+        soloPanel(s);
+        var mes = /^\d{4}-\d{2}$/.test(String(a.mes || '')) ? a.mes : mesDe(hoy());
+        var porFecha = {};
+        db.rows('Reservas').forEach(function (r) {
+          if (!OCUPA[r.estado] || mesDe(r.clase_id) !== mes) return;
+          var f = String(r.clase_id).split('T')[0]; porFecha[f] = (porFecha[f] || 0) + 1;
+        });
+        return { mes: mes, hoy: hoy(), dias: diasDelMes(mes).map(function (f) {
+          var cs = clasesDelDia(f), activas = cs.filter(function (c) { return c.estado !== 'feriado'; });
+          return { fecha: f, clases: activas.length, feriado: cs.length > 0 && !activas.length,
+            reservas: porFecha[f] || 0, cupos: activas.reduce(function (t, c) { return t + c.cupos; }, 0) };
+        }) };
+      },
+
       /* ----- Panel: horario, feriados, avisos ----- */
       horario: function (a, s) {
         soloPanel(s);
