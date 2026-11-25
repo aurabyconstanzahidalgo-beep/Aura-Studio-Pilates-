@@ -380,7 +380,7 @@ var AuraCore = (function () {
       if (correo && !/^\S+@\S+\.\S+$/.test(correo)) throw err('datos', 'El correo no es válido.');
       if (!desdePanel && !correo) throw err('datos', 'El correo no es válido.');
       if (!rut && !correo) throw err('datos', 'Pon el RUT o el correo para que pueda entrar.');
-      if (tel.replace(/\D/g, '').length < 8) throw err('datos', 'Escribe el teléfono.');
+      if ((!desdePanel || tel) && tel.replace(/\D/g, '').length < 8) throw err('datos', 'Escribe el teléfono.');
       if (!/^\d{4}$/.test(pin)) throw err('datos', 'El PIN debe tener 4 números.');
       var existe = db.rows('Alumnas').filter(function (x) {
         return (rut && limpiarRut(x.rut) === rut) || (correo && String(x.correo).toLowerCase() === correo);
@@ -750,6 +750,51 @@ var AuraCore = (function () {
         var u = soloPanel(s), r = validarNuevaAlumna(a, true);
         log(u.id, 'crear_alumna', r.id + ' ' + r.nombre);
         return { ok: true, id: r.id };
+      },
+
+      importarAlumnas: function (a, s) {
+        var u = soloPanel(s, 'dueña'), out = [];
+        var existentes = {}; db.rows('Alumnas').forEach(function (x) { if (x.correo) existentes[String(x.correo).toLowerCase()] = 1; });
+        (a.lista || []).slice(0, 300).forEach(function (item) {
+          var correo = String(item.correo || '').trim().toLowerCase();
+          var nombre = String(item.nombre || '').replace(/[^\p{L}\p{M}\s'.-]/gu, '').replace(/\s+/g, ' ').trim();
+          if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(correo)) { out.push({ nombre: nombre, correo: correo, estado: 'correo inválido' }); return; }
+          if (existentes[correo]) { out.push({ nombre: nombre, correo: correo, estado: 'ya existía' }); return; }
+          var sinNombre = !nombre;
+          if (sinNombre) nombre = correo.split('@')[0];
+          nombre = nombre.split(' ').map(function (w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : w; }).join(' ');
+          var pin = String(1000 + Math.floor(Math.random() * 9000)), id = nuevoId('A');
+          db.insert('Alumnas', { id: id, nombre: nombre, rut: '', correo: correo, telefono: String(item.telefono || '').replace(/[^0-9+]/g, ''),
+            pin_hash: hashPin(id, pin), fecha_nacimiento: '', mostrar_nombre: 'si', alta: hoy(), estado: 'activa',
+            consentimiento_salud: 'si', obs_salud: '', notas: sinNombre ? 'Completar nombre (importada)' : 'Importada de la app anterior',
+            intentos: '0', bloqueada_hasta: '', foto: '' });
+          existentes[correo] = 1;
+          // Plan que traía de la app anterior (sin registrar venta nueva)
+          var planTxt = '';
+          if (item.plan) {
+            var q = String(item.plan).toLowerCase().replace(/^aura\s*/, '').trim();
+            var pl = db.rows('Planes').filter(function (p) { var n = String(p.nombre).toLowerCase(); return p.id.toLowerCase() === q || n === q || n === 'aura ' + q || n.indexOf(q) >= 0; })[0];
+            if (pl) {
+              var total = num(pl.clases), libres = item.libres === '' || item.libres === undefined || item.libres === null ? total : Math.max(0, Math.min(total, num(item.libres)));
+              var ini = /^\d{4}-\d{2}-\d{2}$/.test(String(item.inicio || '')) ? item.inicio : hoy();
+              var dv = num(pl.dias_vigencia);
+              db.insert('PlanesAlumna', { id: nuevoId('PA'), alumna_id: id, plan_id: pl.id, clases_total: String(total), clases_usadas: String(total - libres),
+                inicio: ini, vence: dv > 0 ? sumarDias(ini, dv - 1) : '', estado: 'activo', pago_id: '' });
+              planTxt = pl.nombre + ' · ' + libres + ' clases';
+            } else planTxt = 'plan no encontrado: ' + item.plan;
+          }
+          var enviado = false;
+          if (a.avisar && env.avisar) {
+            env.avisar(correo, 'Tu nueva app de reservas de Aura Studio Pilates',
+              'Hola ' + (sinNombre ? '' : nombre.split(' ')[0]) + '\n\nAura Studio Pilates tiene nueva app para reservar tus clases.\n\n' +
+              'Entra aquí: ' + (a.link || '') + '\nUsuario: ' + correo + '\nPIN: ' + pin + '\n\n' +
+              'Desde tu perfil puedes cambiar el PIN, agregar tu foto y tu teléfono. Instálala en tu celular con "Agregar a inicio".\n\nNos vemos en clases,\nConstanza');
+            enviado = true;
+          }
+          out.push({ id: id, nombre: nombre, correo: correo, pin: pin, estado: 'creada', enviado: enviado, plan: planTxt });
+        });
+        log(u.id, 'importar', out.filter(function (x) { return x.estado === 'creada'; }).length + ' alumnas');
+        return out;
       },
 
       /* ----- Panel: horario, feriados, avisos ----- */

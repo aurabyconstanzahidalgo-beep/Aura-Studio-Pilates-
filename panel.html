@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panel · Aura Studio Pilates</title>
-<meta name="theme-color" content="#6B4C8A">
+<meta name="theme-color" content="#B76E79">
 <meta name="robots" content="noindex">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -47,11 +47,11 @@
   .barra-acc { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
   .buscar { display: flex; gap: .6rem; margin-bottom: 1rem; }
   table.tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: var(--sombra); font-size: .9rem; }
-  .tabla th { text-align: left; font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); padding: .7rem .8rem; background: #FBF9FA; }
+  .tabla th { text-align: left; font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); padding: .7rem .8rem; background: #FAF9F9; }
   .tabla td { padding: .65rem .8rem; border-top: 1px solid var(--linea); vertical-align: middle; }
   .tabla td.num, .tabla th.num { text-align: right; white-space: nowrap; }
   .tabla tr.fila { cursor: pointer; }
-  .tabla tr.fila:hover td { background: #FBF8FD; }
+  .tabla tr.fila:hover td { background: #FCF6F7; }
   .tabla .quien { display: flex; align-items: center; gap: .55rem; }
   @media (max-width: 640px) { .tabla .opc { display: none; } .resumen .n { font-size: 1.5rem; } .nav-dia h1 { font-size: 1.5rem; } }
   .entrar { max-width: 380px; margin: 0 auto; padding: 3rem 1.4rem; }
@@ -261,16 +261,16 @@ function dibujarIG() {
     var W = 1080, H = story ? 1920 : 1350, cv = $('#ig'), x = cv.getContext('2d');
     cv.width = W; cv.height = H;
     var serif = '"Cormorant Garamond", Georgia, serif', sans = '"Nunito Sans", Arial, sans-serif';
-    x.fillStyle = '#F5F1EE'; x.fillRect(0, 0, W, H);
-    x.fillStyle = '#EEE7F5'; x.beginPath(); x.arc(W - 120, 110, 260, 0, 7); x.fill();
+    x.fillStyle = '#F4F3F2'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#F8ECEE'; x.beginPath(); x.arc(W - 120, 110, 260, 0, 7); x.fill();
     x.beginPath(); x.arc(90, H - 60, 200, 0, 7); x.fill();
     var y0 = story ? 210 : 120;
     x.fillStyle = '#34302D'; x.textAlign = 'center';
     x.font = '500 92px ' + serif; espaciado(x, 'AURA', W / 2, y0, 26);
-    x.font = '700 22px ' + sans; x.fillStyle = '#75696F'; espaciado(x, 'STUDIO PILATES', W / 2, y0 + 44, 9);
+    x.font = '700 22px ' + sans; x.fillStyle = '#76706F'; espaciado(x, 'STUDIO PILATES', W / 2, y0 + 44, 9);
     var dias = sem.filter(function (d) { return d.clases.length; });
     var f1 = dObj(sem[0].fecha), f2 = dObj(sem[6].fecha);
-    x.fillStyle = '#6B4C8A'; x.font = 'italic 500 54px ' + serif;
+    x.fillStyle = '#B76E79'; x.font = 'italic 500 54px ' + serif;
     x.fillText('Horario ' + f1.getUTCDate() + ' al ' + f2.getUTCDate() + ' de ' + MESES_L[f2.getUTCMonth()], W / 2, y0 + 125);
     var top = y0 + 175, bottom = H - (story ? 260 : 150), cols = Math.min(3, dias.length || 1), filas = Math.ceil(dias.length / cols);
     var gap = 22, cw = (W - 120 - gap * (cols - 1)) / cols, ch = (bottom - top - gap * (filas - 1)) / Math.max(1, filas);
@@ -278,7 +278,7 @@ function dibujarIG() {
       var cx = 60 + (i % cols) * (cw + gap), cy = top + Math.floor(i / cols) * (ch + gap);
       x.fillStyle = '#FFFFFF'; redondear(x, cx, cy, cw, ch, 28); x.fill();
       var fd = dObj(d.fecha);
-      x.fillStyle = '#6B4C8A'; x.textAlign = 'left'; x.font = '800 30px ' + sans;
+      x.fillStyle = '#B76E79'; x.textAlign = 'left'; x.font = '800 30px ' + sans;
       x.fillText(mayus(DIAS_L[fd.getUTCDay()]) + ' ' + fd.getUTCDate(), cx + 26, cy + 50);
       var lh = Math.min(story ? 88 : 54, (ch - 80) / Math.max(1, d.clases.length));
       d.clases.forEach(function (k, j) {
@@ -295,7 +295,7 @@ function dibujarIG() {
     });
     x.textAlign = 'center'; x.fillStyle = '#34302D'; x.font = '800 30px ' + sans;
     x.fillText('Reserva en la app de Aura', W / 2, H - (story ? 170 : 82));
-    x.font = '600 24px ' + sans; x.fillStyle = '#75696F';
+    x.font = '600 24px ' + sans; x.fillStyle = '#76706F';
     x.fillText('@' + (pub.instagram || '') + '  ·  WhatsApp +' + String(pub.whatsapp).replace(/^(\d{2})(\d)(\d{4})(\d{4})$/, '$1 $2 $3 $4'), W / 2, H - (story ? 128 : 44));
     $('#prev-ig').src = cv.toDataURL('image/png');
   });
@@ -308,7 +308,7 @@ function descargarIG() { $('#ig').toBlob(function (b) { descargar('aura-horario-
 /* =================== ALUMNAS =================== */
 function cargarAlumnas() { return api('alumnas').then(function (l) { alumnasCache = l; return l; }); }
 VISTAS.alumnas = function () {
-  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Alumnas</h1><button class="btn peq" onclick="nuevaAlumna()">+ Nueva alumna</button></div><div class="buscar"><input class="entrada" id="qa" placeholder="Buscar por nombre, RUT o teléfono" oninput="pintarAlumnas()"></div><div id="tabla"><div class="cargando">Cargando…</div></div>';
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Alumnas</h1><button class="btn claro peq" onclick="importarLista()">Importar lista</button><button class="btn peq" onclick="nuevaAlumna()">+ Nueva alumna</button></div><div class="buscar"><input class="entrada" id="qa" placeholder="Buscar por nombre, RUT o teléfono" oninput="pintarAlumnas()"></div><div id="tabla"><div class="cargando">Cargando…</div></div>';
   cargarAlumnas().then(pintarAlumnas);
 };
 function pintarAlumnas() {
@@ -322,6 +322,37 @@ function pintarAlumnas() {
         (a.deudas ? ' <span class="chip alerta">debe ' + a.deudas + '</span>' : '') + '</span></div></td><td class="num">' + a.saldo + '</td><td class="opc">' + fCorta(a.vence) + '</td><td class="opc">' + esc(a.telefono) + '</td></tr>';
     }).join('') + '</tbody></table>';
   Aura.pintarFotos($('#tabla'), token);
+}
+function importarLista() {
+  modal('<h3>Importar alumnas</h3><p class="sub">Una alumna por línea: <b>Nombre; correo; plan; clases que le quedan; fecha de inicio (AAAA-MM-DD)</b>. Solo el correo es obligatorio. ' +
+    'El plan cuenta como saldo que traía, no como venta nueva.</p>' +
+    '<textarea class="entrada" id="imp-t" style="min-height:220px;font-size:.85rem" placeholder="Antonia Rojo; anto.b.rojo19@gmail.com; Equilibrio; 7; 2026-11-23\nCarla Tapia; ctapia.c@hotmail.com"></textarea>' +
+    '<label class="check"><input type="checkbox" id="imp-m" checked><span>Mandarle a cada una un correo de bienvenida con el link de la app y su PIN</span></label>' +
+    '<p class="mini" id="imp-n"></p><div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="hacerImport()">Importar</button></div>');
+  $('#imp-t').addEventListener('input', function () { $('#imp-n').textContent = leerLista().length + ' alumnas detectadas'; });
+}
+function leerLista() {
+  return val('imp-t').split(/\n+/).map(function (l) {
+    var c = l.split(/[;\t]/).map(function (x) { return x.trim(); });
+    var i = c.findIndex(function (x) { return x.indexOf('@') > 0; });
+    if (i < 0) return null;
+    var nombre = i > 0 ? c[0] : '', resto = c.slice(i + 1);
+    return { nombre: nombre, correo: c[i], plan: resto[0] || '', libres: resto[1] || '', inicio: resto[2] || '' };
+  }).filter(Boolean);
+}
+function hacerImport() {
+  var lista = leerLista(); if (!lista.length) return toast('No encontré correos en la lista');
+  var link = location.href.replace(/panel\.html.*$/, '');
+  toast('Importando ' + lista.length + ' alumnas…');
+  api('importarAlumnas', { lista: lista, avisar: $('#imp-m').checked, link: link }).then(function (r) {
+    window._imp = r;
+    var ok = r.filter(function (x) { return x.estado === 'creada'; }).length;
+    modal('<h3>' + ok + ' alumnas importadas</h3><p class="sub">' + (r.some(function (x) { return x.enviado; }) ? 'Se les envió un correo con el link y su PIN. ' : '') + 'Descarga la lista para tener los PIN a mano.</p>' +
+      '<div style="max-height:50vh;overflow:auto">' + tabla(['Alumna', 'PIN', 'Plan', 'Estado'], r.map(function (x) {
+        return ['<b>' + esc(x.nombre) + '</b><div class="mini">' + esc(x.correo) + '</div>', x.pin || '—', esc(x.plan || '—'), x.estado === 'creada' ? '<span class="chip salvia">creada</span>' : '<span class="chip gris">' + esc(x.estado) + '</span>'];
+      })) + '</div><div class="acciones"><button class="btn" onclick="descargar(\'aura-alumnas-importadas.csv\',csv([[\'Nombre\',\'Correo\',\'PIN\',\'Plan\',\'Estado\']].concat(window._imp.map(function(x){return [x.nombre,x.correo,x.pin||\'\',x.plan||\'\',x.estado]}))),\'text/csv\')">Descargar lista con PIN</button>' +
+      '<button class="btn claro" onclick="cerrarModal();VISTAS.alumnas()">Listo</button></div>');
+  });
 }
 function nuevaAlumna() {
   modal('<h3>Nueva alumna</h3><p class="sub">Entra a la app con su RUT o correo y el PIN que le pongas. Después lo puede cambiar.</p>' +
@@ -402,7 +433,7 @@ VISTAS.reportes = function () {
     h += '<div class="resumen">' + kpi(d.clases_dictadas, 'clases dictadas') + kpi(plata(d.ingreso_por_clase), 'ingreso por clase') + kpi(plata(d.costo_por_clase), 'costo por clase') +
       kpi(plata(d.ticket_promedio), 'ticket promedio') + kpi(d.alumnas_activas, 'alumnas activas') + kpi(d.renovacion === null ? '—' : d.renovacion + '%', 'renovación') + '</div>';
     h += '<div class="dos"><div class="tarjeta"><h2 class="sec" style="margin-top:0">Ventas y gastos · 6 meses</h2>' + grafico(d.serie) +
-      '<div class="leyenda"><span><i style="background:#6B4C8A"></i>Ventas</span><span><i style="background:#D9B8C0"></i>Gastos</span></div></div>' +
+      '<div class="leyenda"><span><i style="background:#B76E79"></i>Ventas</span><span><i style="background:#C9C4C2"></i>Gastos</span></div></div>' +
       '<div class="tarjeta"><h2 class="sec" style="margin-top:0">Detalle del mes</h2>' +
       fila('Ventas de planes', plata(d.ventas_planes) + ' · ' + d.planes_vendidos) + fila('Ventas de tienda', plata(d.ventas_productos)) +
       fila('Asistencias / faltas', d.asistencias + ' / ' + d.faltas) + fila('Cancelaciones tardías', d.tardias) + fila('Alumnas nuevas', d.alumnas_nuevas) +
@@ -429,14 +460,14 @@ function tabla(cab, filas) {
 function grafico(serie) {
   var W = 460, H = 200, max = Math.max.apply(null, serie.map(function (s) { return Math.max(s.ventas, s.gastos); }).concat([1]));
   var bw = W / serie.length, out = '<svg class="graf" viewBox="0 0 ' + W + ' ' + (H + 34) + '" role="img" aria-label="Ventas y gastos de los últimos 6 meses">';
-  [0, .5, 1].forEach(function (t) { var y = H - t * (H - 14); out += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#E4DCE0" stroke-width="1"/>'; });
+  [0, .5, 1].forEach(function (t) { var y = H - t * (H - 14); out += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#E6E2E1" stroke-width="1"/>'; });
   serie.forEach(function (s, i) {
     var x0 = i * bw + bw * .18, w = bw * .3, hv = s.ventas / max * (H - 14), hg = s.gastos / max * (H - 14);
-    out += '<rect x="' + x0 + '" y="' + (H - hv) + '" width="' + w + '" height="' + hv + '" rx="4" fill="#6B4C8A"><title>Ventas ' + plata(s.ventas) + '</title></rect>';
-    out += '<rect x="' + (x0 + w + 3) + '" y="' + (H - hg) + '" width="' + w + '" height="' + hg + '" rx="4" fill="#D9B8C0"><title>Gastos ' + plata(s.gastos) + '</title></rect>';
-    out += '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 22) + '" text-anchor="middle" font-size="13" fill="#75696F" font-family="Nunito Sans, sans-serif">' + MESES[+s.mes.split('-')[1] - 1] + '</text>';
+    out += '<rect x="' + x0 + '" y="' + (H - hv) + '" width="' + w + '" height="' + hv + '" rx="4" fill="#B76E79"><title>Ventas ' + plata(s.ventas) + '</title></rect>';
+    out += '<rect x="' + (x0 + w + 3) + '" y="' + (H - hg) + '" width="' + w + '" height="' + hg + '" rx="4" fill="#C9C4C2"><title>Gastos ' + plata(s.gastos) + '</title></rect>';
+    out += '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 22) + '" text-anchor="middle" font-size="13" fill="#76706F" font-family="Nunito Sans, sans-serif">' + MESES[+s.mes.split('-')[1] - 1] + '</text>';
   });
-  out += '<text x="2" y="12" font-size="11" fill="#75696F" font-family="Nunito Sans, sans-serif">' + plata(max) + '</text>';
+  out += '<text x="2" y="12" font-size="11" fill="#76706F" font-family="Nunito Sans, sans-serif">' + plata(max) + '</text>';
   return out + '</svg>';
 }
 function guardarGasto() {
