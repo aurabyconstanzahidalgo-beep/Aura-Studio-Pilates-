@@ -125,6 +125,7 @@
 <script src="config.js"></script>
 <script src="core.js"></script>
 <script src="api.js"></script>
+<script src="nav.js"></script>
 </head>
 <body>
 <div id="demo" class="banda-demo oculto">Modo demostración · entra con RUT <b>11.111.111-1</b> y PIN <b>1234</b><button onclick="reiniciar()">Reiniciar</button></div>
@@ -187,7 +188,13 @@
 
 <script>
 var TK = 'aura_tk', token = localStorage.getItem(TK) || '';
-var pub = null, yo = null, diaSel = null, cacheClases = null;
+var pub = null, yo = null, diaSel = null, cacheClases = null, tabActual = null;
+AuraNav.mostrar = function (e) {
+  if (!token) return ir(e.vista === 'registro' ? 'registro' : 'entrar', true);
+  if (!yo) return;
+  if ($('#v-app').classList.contains('oculto')) ir('app', true);
+  tab(e.tab || 'inicio', true);
+};
 var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 var DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
@@ -207,17 +214,18 @@ function api(a, args) {
   });
 }
 function modal(html) {
-  cerrarModal();
+  var previa = $('#velo'); if (previa) previa.remove(); else AuraNav.modalAbierto();
   var v = document.createElement('div'); v.className = 'velo'; v.id = 'velo';
   v.innerHTML = '<div class="modal">' + html + '</div>';
   v.addEventListener('click', function (e) { if (e.target === v) cerrarModal(); });
   document.body.appendChild(v);
 }
-function cerrarModal() { var v = $('#velo'); if (v) v.remove(); }
+function cerrarModal() { var v = $('#velo'); if (v) { v.remove(); AuraNav.modalCerrado(); } }
 function ws(texto) { return 'https://wa.me/' + (pub && pub.whatsapp || '') + '?text=' + encodeURIComponent(texto); }
 
 /* ---------- Vistas ---------- */
-function ir(v) {
+function ir(v, sinHist) {
+  if (!sinHist) { if (v === 'registro') AuraNav.ir({ vista: 'registro' }); else AuraNav.base({ vista: v }); }
   ['entrar', 'registro', 'app'].forEach(function (x) { $('#v-' + x).classList.toggle('oculto', x !== v); });
   window.scrollTo(0, 0);
 }
@@ -252,7 +260,9 @@ $('#f-entrar').addEventListener('submit', function (e) {
   });
 })();
 
-function tab(t) {
+function tab(t, sinHist) {
+  if (!sinHist && t !== tabActual) AuraNav.ir({ vista: 'app', tab: t });
+  tabActual = t;
   document.querySelectorAll('nav.abajo button').forEach(function (b) { b.classList.toggle('activo', b.dataset.tab === t); });
   window.scrollTo(0, 0);
   ({ inicio: vInicio, clases: vClases, tienda: vTienda, plan: vPlan, perfil: vPerfil })[t]();
@@ -264,7 +274,7 @@ function verPoliticas() {
 }
 function empezar() {
   ir('app'); $('#contenido').innerHTML = '<div class="cargando">Cargando…</div>';
-  cargarYo().then(function () { tab('inicio'); });
+  cargarYo().then(function () { tabActual = 'inicio'; AuraNav.base({ vista: 'app', tab: 'inicio' }); tab('inicio', true); });
 }
 
 /* ---------- INICIO ---------- */

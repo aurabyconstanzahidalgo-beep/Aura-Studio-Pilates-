@@ -81,15 +81,16 @@
 <script src="config.js"></script>
 <script src="core.js"></script>
 <script src="api.js"></script>
+<script src="nav.js"></script>
 </head>
 <body>
-<div id="demo" class="banda-demo oculto">Panel de demostración · correo <b>demo@aura.cl</b> · clave <b>aura</b><button onclick="Aura.reiniciarDemo();salir()">Reiniciar</button></div>
+<div id="demo" class="banda-demo oculto">Panel de demostración · usuario <b>aura</b> · clave <b>1234</b><button onclick="Aura.reiniciarDemo();salir()">Reiniciar</button></div>
 
 <section id="v-entrar" class="entrar oculto">
   <img src="logo.jpg" alt="Aura Studio Pilates" style="display:block;width:220px;max-width:70%;aspect-ratio:1;object-fit:cover;border-radius:22px;margin:0 auto .8rem;box-shadow:var(--sombra)">
   <div class="marca" style="margin-bottom:1.6rem"><div class="by">Panel del estudio</div></div>
   <form id="f-entrar">
-    <label class="campo"><span>Correo</span><input class="entrada" name="correo" type="email" required autocomplete="username"></label>
+    <label class="campo"><span>Usuario o correo</span><input class="entrada" name="correo" type="text" autocapitalize="none" autocorrect="off" required autocomplete="username"></label>
     <label class="campo"><span>Clave</span><input class="entrada" name="clave" type="password" required autocomplete="current-password"></label>
     <button class="btn bloque">Entrar</button>
   </form>
@@ -104,6 +105,7 @@
       <button data-t="reportes" onclick="tab('reportes')" class="solo-duena">Reportes</button>
       <button data-t="tienda" onclick="tab('tienda')">Tienda y eventos</button>
       <button data-t="ajustes" onclick="tab('ajustes')" class="solo-duena">Ajustes</button>
+      <button onclick="miClave()">Mi clave</button>
       <button onclick="salir()" title="Salir">Salir</button>
     </div>
   </div></header>
@@ -130,9 +132,9 @@ function nombreMes(m) { var p = m.split('-'); return mayus(MESES_L[+p[1] - 1]) +
 function sumaMes(m, n) { var p = m.split('-'); var d = new Date(Date.UTC(+p[0], +p[1] - 1 + n, 1)); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2); }
 function toast(t) { var e = $('#toast'); e.textContent = t; e.classList.add('ver'); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove('ver'); }, 3200); }
 function api(a, args) { return Aura.llamar(a, args, token).catch(function (e) { if (e.codigo === 'sesion') salir(); toast(e.mensaje || 'Algo salió mal'); throw e; }); }
-function modal(html) { cerrarModal(); var v = document.createElement('div'); v.className = 'velo'; v.id = 'velo';
+function modal(html) { var previa = $('#velo'); if (previa) previa.remove(); else AuraNav.modalAbierto(); var v = document.createElement('div'); v.className = 'velo'; v.id = 'velo';
   v.innerHTML = '<div class="modal">' + html + '</div>'; v.addEventListener('click', function (e) { if (e.target === v) cerrarModal(); }); document.body.appendChild(v); Aura.pintarFotos(v, token); }
-function cerrarModal() { var v = $('#velo'); if (v) v.remove(); }
+function cerrarModal() { var v = $('#velo'); if (v) { v.remove(); AuraNav.modalCerrado(); } }
 function tel(t) { t = String(t || '').replace(/\D/g, ''); if (t.length === 9) t = '56' + t; return t; }
 function ws(t, msg) { return 'https://wa.me/' + tel(t) + '?text=' + encodeURIComponent(msg); }
 function iniciales(n) { var p = String(n).split(' '); return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
@@ -155,8 +157,11 @@ $('#f-entrar').addEventListener('submit', function (e) {
     token = r.token; rol = r.rol; localStorage.setItem(TK, token); localStorage.setItem(TK + '_rol', rol); f.clave.value = ''; empezar();
   }).catch(function (e) { toast(e.mensaje); });
 });
-var VISTAS = {};
-function tab(t) {
+var VISTAS = {}, tabActual = null;
+AuraNav.mostrar = function (e) { if (token && e.tab) tab(e.tab, true); };
+function tab(t, sinHist) {
+  if (!sinHist && t !== tabActual) AuraNav.ir({ tab: t });
+  tabActual = t;
   document.querySelectorAll('.pestanas button[data-t]').forEach(function (b) { b.classList.toggle('activo', b.dataset.t === t); });
   window.scrollTo(0, 0); VISTAS[t]();
 }
@@ -164,7 +169,22 @@ function refrescarPub() { return Aura.llamar('publico').then(function (p) { pub 
 function empezar() {
   ir('app');
   document.querySelectorAll('.solo-duena').forEach(function (b) { b.classList.toggle('oculto', rol !== 'dueña'); });
-  refrescarPub().then(function () { fecha = fecha || hoy; mesSel = mesSel || hoy.slice(0, 7); tab('dia'); });
+  refrescarPub().then(function () { fecha = fecha || hoy; mesSel = mesSel || hoy.slice(0, 7); tabActual = 'dia'; AuraNav.base({ tab: 'dia' }); tab('dia', true); });
+}
+
+function miClave() {
+  modal('<h3>Mi clave</h3><p class="sub">Cambia tu clave del panel. Si quieres, también tu usuario corto para entrar.</p>' +
+    '<label class="campo"><span>Usuario (opcional)</span><input class="entrada" id="mc-u" autocapitalize="none" placeholder="aura"></label>' +
+    '<label class="campo"><span>Clave actual</span><input class="entrada" id="mc-a" type="password" autocomplete="current-password"></label>' +
+    '<div class="fila2"><label class="campo"><span>Clave nueva</span><input class="entrada" id="mc-n" type="password" autocomplete="new-password"></label>' +
+    '<label class="campo"><span>Repite la nueva</span><input class="entrada" id="mc-r" type="password" autocomplete="new-password"></label></div>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="guardarClave()">Guardar</button></div>');
+}
+function guardarClave() {
+  if (val('mc-n') !== val('mc-r')) return toast('Las claves nuevas no coinciden');
+  var args = { actual: val('mc-a'), nueva: val('mc-n') };
+  if (val('mc-u').trim()) args.usuario = val('mc-u');
+  api('cambiarClave', args).then(function () { cerrarModal(); toast('Clave actualizada'); });
 }
 
 /* =================== CLASES =================== */
@@ -328,6 +348,7 @@ function importarLista() {
   modal('<h3>Importar alumnas</h3><p class="sub">Una alumna por línea: <b>Nombre; correo; plan; clases que le quedan; fecha de inicio (AAAA-MM-DD)</b>. Solo el correo es obligatorio. ' +
     'El plan cuenta como saldo que traía, no como venta nueva.</p>' +
     '<textarea class="entrada" id="imp-t" style="min-height:220px;font-size:.85rem" placeholder="Antonia Rojo; anto.b.rojo19@gmail.com; Equilibrio; 7; 2026-11-23\nCarla Tapia; ctapia.c@hotmail.com"></textarea>' +
+    '<label class="campo" style="margin-top:.8rem"><span>PIN inicial para todas</span><input class="entrada" id="imp-p" inputmode="numeric" maxlength="4" value="1234"></label>' +
     '<label class="check"><input type="checkbox" id="imp-m" checked><span>Mandarle a cada una un correo de bienvenida con el link de la app y su PIN</span></label>' +
     '<p class="mini" id="imp-n"></p><div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="hacerImport()">Importar</button></div>');
   $('#imp-t').addEventListener('input', function () { $('#imp-n').textContent = leerLista().length + ' alumnas detectadas'; });
@@ -345,7 +366,7 @@ function hacerImport() {
   var lista = leerLista(); if (!lista.length) return toast('No encontré correos en la lista');
   var link = location.href.replace(/panel\.html.*$/, '');
   toast('Importando ' + lista.length + ' alumnas…');
-  api('importarAlumnas', { lista: lista, avisar: $('#imp-m').checked, link: link }).then(function (r) {
+  api('importarAlumnas', { lista: lista, avisar: $('#imp-m').checked, link: link, pin: val('imp-p') }).then(function (r) {
     window._imp = r;
     var ok = r.filter(function (x) { return x.estado === 'creada'; }).length;
     modal('<h3>' + ok + ' alumnas importadas</h3><p class="sub">' + (r.some(function (x) { return x.enviado; }) ? 'Se les envió un correo con el link y su PIN. ' : '') + 'Descarga la lista para tener los PIN a mano.</p>' +
@@ -360,7 +381,7 @@ function nuevaAlumna() {
     '<label class="campo"><span>Nombre y apellido</span><input class="entrada" id="na-n"></label>' +
     '<div class="fila2"><label class="campo"><span>RUT</span><input class="entrada" id="na-r" placeholder="12.345.678-9"></label><label class="campo"><span>Teléfono</span><input class="entrada" id="na-t" inputmode="tel"></label></div>' +
     '<label class="campo"><span>Correo</span><input class="entrada" id="na-c" type="email"></label>' +
-    '<div class="fila2"><label class="campo"><span>Cumpleaños (DD-MM)</span><input class="entrada" id="na-f" placeholder="14-03"></label><label class="campo"><span>PIN inicial</span><input class="entrada" id="na-p" inputmode="numeric" maxlength="4" value="' + String(Math.floor(1000 + Math.random() * 9000)) + '"></label></div>' +
+    '<div class="fila2"><label class="campo"><span>Cumpleaños (DD-MM)</span><input class="entrada" id="na-f" placeholder="14-03"></label><label class="campo"><span>PIN inicial</span><input class="entrada" id="na-p" inputmode="numeric" maxlength="4" value="1234"></label></div>' +
     '<label class="campo"><span>Salud (lesiones, embarazo…)</span><textarea class="entrada" id="na-s"></textarea></label>' +
     '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="crearAlumna()">Crear alumna</button></div>');
 }

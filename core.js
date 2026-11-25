@@ -10,7 +10,7 @@ var AuraCore = (function () {
   /* ---------- Estructura de las hojas ---------- */
   var TABLAS = {
     Config:       ['clave', 'valor'],
-    Usuarios:     ['id', 'nombre', 'correo', 'rol', 'clave_hash', 'activo'],
+    Usuarios:     ['id', 'nombre', 'correo', 'rol', 'clave_hash', 'activo', 'usuario'],
     Alumnas:      ['id', 'nombre', 'rut', 'correo', 'telefono', 'pin_hash', 'fecha_nacimiento',
                    'mostrar_nombre', 'alta', 'estado', 'consentimiento_salud', 'obs_salud', 'notas',
                    'intentos', 'bloqueada_hasta', 'foto'],
@@ -464,8 +464,10 @@ var AuraCore = (function () {
       },
 
       entrarPanel: function (a) {
-        var correo = String(a.correo || '').trim().toLowerCase();
-        var u = db.rows('Usuarios').filter(function (x) { return String(x.correo).toLowerCase() === correo && x.activo !== 'no'; })[0];
+        var correo = String(a.correo || a.usuario || '').trim().toLowerCase();
+        var u = db.rows('Usuarios').filter(function (x) {
+          return x.activo !== 'no' && (String(x.correo).toLowerCase() === correo || (x.usuario && String(x.usuario).toLowerCase() === correo));
+        })[0];
         if (!u || hashClave(u.id, String(a.clave || '')) !== u.clave_hash) throw err('login', 'Correo o clave incorrectos.');
         log(u.id, 'entrar_panel', '');
         return { token: firmar(u.rol, u.id), nombre: u.nombre, rol: u.rol };
@@ -763,7 +765,7 @@ var AuraCore = (function () {
           var sinNombre = !nombre;
           if (sinNombre) nombre = correo.split('@')[0];
           nombre = nombre.split(' ').map(function (w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : w; }).join(' ');
-          var pin = String(1000 + Math.floor(Math.random() * 9000)), id = nuevoId('A');
+          var pin = /^\d{4}$/.test(String(a.pin || '')) ? String(a.pin) : '1234', id = nuevoId('A');
           db.insert('Alumnas', { id: id, nombre: nombre, rut: '', correo: correo, telefono: String(item.telefono || '').replace(/[^0-9+]/g, ''),
             pin_hash: hashPin(id, pin), fecha_nacimiento: '', mostrar_nombre: 'si', alta: hoy(), estado: 'activa',
             consentimiento_salud: 'si', obs_salud: '', notas: sinNombre ? 'Completar nombre (importada)' : 'Importada de la app anterior',
@@ -1010,6 +1012,24 @@ var AuraCore = (function () {
             .sort(function (x, y) { return (x[0] + x[1]) < (y[0] + y[1]) ? -1 : 1; }),
           alumnas: db.rows('Alumnas').map(function (x) { return [x.nombre, x.rut, x.correo, x.telefono, x.alta, x.estado, saldo(x.id)]; })
         };
+      },
+
+      cambiarClave: function (a, s) {
+        var u = soloPanel(s);
+        if (hashClave(u.id, String(a.actual || '')) !== u.clave_hash) throw err('clave', 'La clave actual no es correcta.');
+        var nueva = String(a.nueva || '');
+        if (nueva.length < 4) throw err('clave', 'La clave nueva debe tener al menos 4 caracteres.');
+        var cambios = { clave_hash: hashClave(u.id, nueva) };
+        if (a.usuario !== undefined) {
+          var us = String(a.usuario).trim().toLowerCase();
+          if (us && !/^[a-z0-9._-]{3,30}$/.test(us)) throw err('clave', 'El usuario solo puede tener letras, números, punto o guion.');
+          var otro = db.rows('Usuarios').filter(function (x) { return x.id !== u.id && us && String(x.usuario).toLowerCase() === us; });
+          if (otro.length) throw err('clave', 'Ese usuario ya existe.');
+          cambios.usuario = us;
+        }
+        db.update('Usuarios', u.id, cambios);
+        log(u.id, 'cambiar_clave', '');
+        return { ok: true };
       },
 
       /* ----- Panel: Drive (dueña) ----- */

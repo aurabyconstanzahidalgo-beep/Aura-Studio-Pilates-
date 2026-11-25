@@ -95,7 +95,7 @@
     var mesA = h0.slice(0, 7);
     [['Arriendo', 'Local', 350000, 'fijo'], ['Servicios', 'Luz y agua', 45000, 'fijo'], ['Insumos', 'Desinfectante y toallas', 18000, 'variable']]
       .forEach(function (g, i) { t.Gastos.push({ id: 'G' + i, fecha: mesA + '-0' + (i + 2), categoria: g[0], detalle: g[1], monto: String(g[2]), tipo: g[3], activo: 'si' }); });
-    t.Usuarios.push({ id: 'U1', nombre: 'Constanza Hidalgo', correo: 'demo@aura.cl', rol: 'dueña', clave_hash: motor.hashClave('U1', 'aura'), activo: 'si' });
+    t.Usuarios.push({ id: 'U1', nombre: 'Constanza Hidalgo', correo: 'demo@aura.cl', usuario: 'aura', rol: 'dueña', clave_hash: motor.hashClave('U1', '1234'), activo: 'si' });
     guardar();
     var gente = [
       ['Valentina Muñoz', 11111111, 'valentina@correo.cl', 'P4', '', '14-03'],
@@ -107,7 +107,7 @@
     ];
     var hoy = AuraCore.util.fechaDe(ahoraChile());
     var d = hoy.split('-'); gente[0][5] = d[2] + '-' + d[1]; // Valentina está de cumpleaños hoy
-    var panel = motor.llamar('entrarPanel', { correo: 'demo@aura.cl', clave: 'aura' }).token;
+    var panel = motor.llamar('entrarPanel', { correo: 'aura', clave: '1234' }).token;
     var tokens = gente.map(function (g) {
       var r = motor.llamar('registro', { nombre: g[0], rut: g[1] + '-' + dv(g[1]), correo: g[2], telefono: '+569' + String(g[1]).slice(0, 8),
         pin: '1234', consentimiento_salud: true, obs_salud: g[4], fecha_nacimiento: g[5], mostrar_nombre: g[0] !== 'Francisca Soto' });
