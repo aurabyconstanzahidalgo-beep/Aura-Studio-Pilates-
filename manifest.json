@@ -1,0 +1,16 @@
+{
+  "name": "Aura Studio Pilates",
+  "short_name": "Aura",
+  "description": "Reserva tus clases de Pilates reformer en Aura Studio Pilates.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F1EE",
+  "theme_color": "#6B4C8A",
+  "lang": "es-CL",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

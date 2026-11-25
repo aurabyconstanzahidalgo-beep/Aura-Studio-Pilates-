@@ -1,0 +1,99 @@
+/* Aura Studio Pilates · estilos compartidos (paleta Lavanda y ciruela) */
+:root {
+  --fondo: #F5F1EE;        /* gris cálido */
+  --tarjeta: #FFFFFF;
+  --tinta: #34302D;        /* carbón */
+  --suave: #75696F;
+  --linea: #E4DCE0;
+  --piedra: #D9D3CD;
+  --morado: #6B4C8A;       /* ciruela, color principal */
+  --morado-osc: #523872;
+  --lavanda: #EEE7F5;
+  --lila: #B9A3D0;
+  --rosa: #9B5867;         /* rosa empolvado, acentos */
+  --rosa-claro: #F6E9EC;
+  --salvia: #7E9479;
+  --salvia-claro: #E9EFE6;
+  --alerta: #B4573E;
+  --sombra: 0 1px 2px rgba(52, 48, 45, .05), 0 6px 20px rgba(107, 76, 138, .07);
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--fondo); color: var(--tinta); font-family: var(--sans); font-size: 16px; line-height: 1.45; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--morado); }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; letter-spacing: .01em; }
+.oculto { display: none !important; }
+
+/* Marca */
+.marca { text-align: center; line-height: 1; }
+.marca .aura { font-family: var(--serif); font-weight: 500; letter-spacing: .32em; font-size: 2.1rem; padding-left: .32em; }
+.marca .studio { font-size: .62rem; letter-spacing: .42em; padding-left: .42em; margin-top: .35rem; color: var(--suave); }
+.marca .by { font-family: var(--serif); font-style: italic; font-size: .95rem; color: var(--morado); margin-top: .3rem; }
+.sello { width: 128px; height: 128px; border-radius: 50%; margin: 0 auto 1.2rem; display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #fff 0, var(--lavanda) 55%, #E2D7EC 100%); box-shadow: inset 0 0 0 1px #E2D7EC; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; border: 0; cursor: pointer;
+  background: var(--morado); color: #fff; padding: .8rem 1.2rem; border-radius: 999px; font-weight: 700; letter-spacing: .01em;
+  transition: background .15s, transform .05s; text-decoration: none; }
+.btn:hover { background: var(--morado-osc); }
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.bloque { width: 100%; }
+.btn.claro { background: var(--lavanda); color: var(--morado-osc); }
+.btn.claro:hover { background: #E4D9F0; }
+.btn.borde { background: transparent; color: var(--morado); box-shadow: inset 0 0 0 1.5px var(--lila); }
+.btn.rosa { background: var(--rosa); }
+.btn.peq { padding: .45rem .85rem; font-size: .85rem; }
+.btn.ws { background: #2E8B57; }
+.link { background: none; border: 0; color: var(--morado); font-weight: 700; cursor: pointer; padding: .3rem; }
+
+/* Formularios */
+label.campo { display: block; margin-bottom: .9rem; }
+label.campo > span { display: block; font-size: .8rem; font-weight: 700; color: var(--suave); margin-bottom: .3rem; letter-spacing: .02em; }
+.entrada { width: 100%; padding: .75rem .9rem; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff; outline: none; }
+.entrada:focus { border-color: var(--lila); box-shadow: 0 0 0 3px var(--lavanda); }
+textarea.entrada { min-height: 80px; resize: vertical; }
+.check { display: flex; gap: .6rem; align-items: flex-start; font-size: .9rem; margin: .6rem 0; }
+.check input { width: 20px; height: 20px; accent-color: var(--morado); margin-top: 1px; flex: none; }
+.fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+
+/* Tarjetas */
+.tarjeta { background: var(--tarjeta); border-radius: 18px; padding: 1.1rem; box-shadow: var(--sombra); }
+.chip { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; font-weight: 800; padding: .2rem .55rem; border-radius: 999px; background: var(--lavanda); color: var(--morado-osc); white-space: nowrap; }
+.chip.rosa { background: var(--rosa-claro); color: var(--rosa); }
+.chip.salvia { background: var(--salvia-claro); color: #4F6A4A; }
+.chip.alerta { background: #F7E4DE; color: var(--alerta); }
+.chip.gris { background: #EFEAE7; color: var(--suave); }
+
+/* Avisos */
+#toast { position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%) translateY(20px); background: var(--tinta); color: #fff;
+  padding: .75rem 1.1rem; border-radius: 14px; font-size: .9rem; opacity: 0; pointer-events: none; transition: .25s; z-index: 60; max-width: 90vw; text-align: center; }
+#toast.ver { opacity: 1; transform: translateX(-50%) translateY(0); }
+.banda-demo { background: var(--morado); color: #fff; font-size: .78rem; text-align: center; padding: .4rem .8rem; }
+.banda-demo b { font-weight: 800; }
+.banda-demo button { background: rgba(255,255,255,.18); color: #fff; border: 0; border-radius: 999px; padding: .15rem .6rem; margin-left: .4rem; cursor: pointer; font-size: .72rem; }
+
+/* Ventana modal */
+.velo { position: fixed; inset: 0; background: rgba(52, 48, 45, .38); display: flex; align-items: flex-end; justify-content: center; z-index: 50; animation: aparecer .15s; }
+.modal { background: #fff; width: 100%; max-width: 480px; border-radius: 24px 24px 0 0; padding: 1.4rem 1.3rem calc(1.3rem + env(safe-area-inset-bottom)); animation: subir .2s ease-out; max-height: 92vh; overflow: auto; }
+@media (min-width: 700px) { .velo { align-items: center; } .modal { border-radius: 24px; } }
+@keyframes aparecer { from { opacity: 0; } }
+@keyframes subir { from { transform: translateY(30px); opacity: .6; } }
+.cargando { text-align: center; color: var(--suave); padding: 2rem 0; font-size: .9rem; }
+.vacio { text-align: center; color: var(--suave); padding: 1.4rem .5rem; font-size: .92rem; }
+
+/* Fotos de perfil */
+.av { width: 34px; height: 34px; flex: none; border-radius: 50%; background: var(--lavanda) center/cover no-repeat; color: var(--morado-osc);
+  display: inline-grid; place-items: center; font-weight: 800; font-size: .8rem; overflow: hidden; }
+.av.con-foto { color: transparent; }
+.av.g { width: 84px; height: 84px; font-size: 1.6rem; }
+.av.m { width: 26px; height: 26px; font-size: .65rem; }
+.foto-sub { position: relative; display: inline-block; cursor: pointer; }
+.foto-sub input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.foto-sub .lapiz { position: absolute; right: -2px; bottom: -2px; background: var(--morado); color: #fff; width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; font-size: .8rem; border: 2px solid #fff; }
+.texto-pol { white-space: pre-line; font-size: .92rem; line-height: 1.55; }
+@media print { .no-print, .barra-sup, .banda-demo, nav.abajo { display: none !important; } body { background: #fff; } .tarjeta { box-shadow: none; border: 1px solid #ddd; } }

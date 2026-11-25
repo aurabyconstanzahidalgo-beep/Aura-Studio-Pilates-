@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aura Studio Pilates · Reservas</title>
+<meta name="theme-color" content="#6B4C8A">
+<meta name="description" content="Reserva tus clases de Pilates reformer en Aura Studio Pilates, Illapel.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aura">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="aura.css">
+<style>
+  body { min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .cabeza { display: flex; align-items: center; justify-content: space-between; padding: calc(.9rem + env(safe-area-inset-top)) 1.2rem .6rem; }
+  .cabeza .marca { text-align: left; }
+  .cabeza .marca .aura { font-size: 1.35rem; padding-left: 0; }
+  .cabeza .marca .studio { font-size: .5rem; padding-left: 0; }
+  .ini { width: 38px; height: 38px; border-radius: 50%; background: var(--lavanda); color: var(--morado-osc); display: grid; place-items: center; font-weight: 800; border: 0; cursor: pointer; }
+  main { padding: .4rem 1.2rem 1rem; }
+  .saludo { font-family: var(--serif); font-size: 1.9rem; margin: .4rem 0 1rem; line-height: 1.1; }
+  .saludo small { display: block; font-family: var(--sans); font-size: .85rem; color: var(--suave); margin-top: .35rem; }
+  .saldo { background: linear-gradient(135deg, var(--morado) 0%, #8A6AA8 100%); color: #fff; border-radius: 22px; padding: 1.2rem 1.3rem; position: relative; overflow: hidden; }
+  .saldo::after { content: ''; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.08); }
+  .saldo .n { font-family: var(--serif); font-size: 3.2rem; line-height: 1; }
+  .saldo .t { font-size: .85rem; opacity: .9; }
+  .saldo .v { margin-top: .7rem; font-size: .8rem; opacity: .85; }
+  .seccion { margin: 1.5rem 0 .7rem; display: flex; justify-content: space-between; align-items: baseline; }
+  .seccion h2 { font-size: 1.35rem; }
+  .prox { display: flex; gap: .9rem; align-items: center; }
+  .fecha-caja { width: 58px; flex: none; text-align: center; background: var(--lavanda); border-radius: 14px; padding: .45rem 0; color: var(--morado-osc); }
+  .fecha-caja .d { font-family: var(--serif); font-size: 1.6rem; line-height: 1; font-weight: 600; }
+  .fecha-caja .m { font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .prox .info { flex: 1; min-width: 0; }
+  .prox .h { font-weight: 800; }
+  .prox .s { font-size: .83rem; color: var(--suave); }
+  .lista > * + * { margin-top: .7rem; }
+  .aviso { border-radius: 16px; padding: .85rem 1rem; font-size: .9rem; margin-bottom: 1rem; }
+  .aviso.cumple { background: var(--rosa-claro); color: var(--rosa); }
+  .aviso.deuda { background: #F7E4DE; color: var(--alerta); }
+
+  /* Días */
+  .dias { display: flex; gap: .5rem; overflow-x: auto; padding: .2rem 1.2rem .8rem; margin: 0 -1.2rem; scrollbar-width: none; }
+  .dias::-webkit-scrollbar { display: none; }
+  .dia { flex: none; width: 54px; border: 0; border-radius: 16px; background: #fff; padding: .5rem 0; cursor: pointer; box-shadow: var(--sombra); text-align: center; }
+  .dia .ds { font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--suave); }
+  .dia .dn { font-family: var(--serif); font-size: 1.45rem; font-weight: 600; line-height: 1.1; }
+  .dia.activo { background: var(--morado); color: #fff; }
+  .dia.activo .ds { color: #E4D9F0; }
+  .dia.sin { opacity: .45; }
+
+  /* Clase */
+  .clase { background: #fff; border-radius: 18px; padding: 1rem; box-shadow: var(--sombra); }
+  .clase.mia { box-shadow: inset 0 0 0 2px var(--morado), var(--sombra); }
+  .clase .top { display: flex; justify-content: space-between; align-items: flex-start; gap: .6rem; }
+  .clase .hora { font-family: var(--serif); font-size: 1.55rem; font-weight: 600; line-height: 1; }
+  .clase .tipo { font-size: .85rem; color: var(--suave); margin-top: .25rem; }
+  .puntos { display: flex; gap: 4px; margin-top: .75rem; }
+  .puntos i { width: 100%; height: 6px; border-radius: 6px; background: var(--lavanda); }
+  .puntos i.on { background: var(--lila); }
+  .puntos i.yo { background: var(--morado); }
+  .clase .pie { display: flex; justify-content: space-between; align-items: center; margin-top: .8rem; gap: .6rem; }
+  .clase .cupos { font-size: .82rem; color: var(--suave); }
+  .quienes { margin-top: .7rem; display: flex; flex-wrap: wrap; gap: .35rem; }
+  .quienes span { font-size: .74rem; background: var(--fondo); border-radius: 999px; padding: .2rem .55rem; color: var(--suave); }
+  .quienes span.tu { background: var(--lavanda); color: var(--morado-osc); font-weight: 800; }
+  .ver-quien { background: none; border: 0; color: var(--morado); font-size: .8rem; font-weight: 700; padding: 0; cursor: pointer; margin-top: .55rem; }
+
+  /* Planes */
+  .plan { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
+  .plan .nom { font-weight: 800; }
+  .plan .det { font-size: .82rem; color: var(--suave); }
+  .plan .pre { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; white-space: nowrap; }
+  .barra { height: 8px; border-radius: 8px; background: var(--lavanda); margin-top: .6rem; overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--morado); border-radius: 8px; }
+
+  /* Navegación inferior */
+  nav.abajo { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--linea); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
+  nav.abajo .in { display: flex; width: 100%; max-width: 480px; }
+  nav.abajo button { flex: 1; background: none; border: 0; padding: .6rem 0 .55rem; cursor: pointer; color: var(--suave); font-size: .7rem; font-weight: 700; }
+  nav.abajo button svg { display: block; margin: 0 auto .15rem; width: 22px; height: 22px; }
+  nav.abajo button.activo { color: var(--morado); }
+
+  /* Entrar */
+  .entrar { padding: calc(2.5rem + env(safe-area-inset-top)) 1.5rem 2rem; max-width: 420px; margin: 0 auto; }
+  .entrar .marca { margin-bottom: 2rem; }
+  .pin { letter-spacing: .6em; text-align: center; font-size: 1.3rem; }
+  .pin::placeholder { letter-spacing: .15em; font-size: 1rem; }
+  .ok-grande { width: 74px; height: 74px; border-radius: 50%; background: var(--lavanda); color: var(--morado); display: grid; place-items: center; margin: .3rem auto 1rem; }
+  .modal h3 { font-size: 1.6rem; margin-bottom: .4rem; }
+  .modal .sub { color: var(--suave); font-size: .92rem; margin-bottom: 1.1rem; }
+  .botones { display: flex; gap: .6rem; margin-top: 1.2rem; }
+  .botones .btn { flex: 1; }
+  .dato { display: flex; justify-content: space-between; padding: .65rem 0; border-bottom: 1px solid var(--linea); font-size: .92rem; }
+  .dato span:first-child { color: var(--suave); }
+  .interruptor { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid var(--linea); }
+  .interruptor small { display: block; color: var(--suave); font-size: .8rem; }
+  .sw { position: relative; width: 48px; height: 28px; flex: none; }
+  .sw input { opacity: 0; width: 0; height: 0; }
+  .sw i { position: absolute; inset: 0; background: var(--piedra); border-radius: 99px; transition: .2s; cursor: pointer; }
+  .sw i::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  .sw input:checked + i { background: var(--morado); }
+  .sw input:checked + i::before { transform: translateX(20px); }
+  .quienes .av { margin-right: -.2rem; border: 2px solid #fff; }
+  .quienes span.n { font-size: .74rem; background: var(--fondo); border-radius: 999px; padding: .2rem .55rem .2rem .45rem; color: var(--suave); display: inline-flex; align-items: center; gap: .35rem; }
+  .quienes span.n.tu { background: var(--lavanda); color: var(--morado-osc); font-weight: 800; }
+  .quienes span.n .av { width: 22px; height: 22px; font-size: .58rem; border: 0; margin: 0; }
+  .serie-btn { width: 100%; margin: .2rem 0 1rem; }
+  .prod { display: flex; gap: .9rem; align-items: center; }
+  .prod .img { width: 72px; height: 72px; border-radius: 16px; background: var(--lavanda) center/cover; flex: none; display: grid; place-items: center; font-family: var(--serif); font-size: 1.4rem; color: var(--morado); }
+  .prod .img.con-foto { color: transparent; }
+  .evento { display: flex; gap: .9rem; }
+  .perfil-top { display: flex; gap: 1rem; align-items: center; margin: .4rem 0 1rem; }
+  .perfil-top .saludo { margin: 0; }
+  nav.abajo button { font-size: .66rem; }
+</style>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="api.js"></script>
+</head>
+<body>
+<div id="demo" class="banda-demo oculto">Modo demostración · entra con RUT <b>11.111.111-1</b> y PIN <b>1234</b><button onclick="reiniciar()">Reiniciar</button></div>
+
+<!-- ENTRAR -->
+<section id="v-entrar" class="entrar oculto">
+  <div class="sello"><div class="marca"><div class="aura">AURA</div><div class="studio">STUDIO PILATES</div></div></div>
+  <div class="marca"><div class="by">by Constanza Hidalgo</div></div>
+  <form id="f-entrar" autocomplete="on">
+    <label class="campo"><span>RUT o correo</span><input class="entrada" name="usuario" autocomplete="username" required placeholder="12.345.678-9"></label>
+    <label class="campo"><span>PIN de 4 números</span><input class="entrada pin" name="pin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" autocomplete="current-password" required placeholder="••••"></label>
+    <button class="btn bloque" type="submit">Entrar</button>
+  </form>
+  <p style="text-align:center;margin-top:1.4rem">¿Primera vez? <button class="link" onclick="ir('registro')">Crear mi cuenta</button></p>
+  <p style="text-align:center;margin-top:.2rem"><button class="link" style="font-weight:600;color:var(--suave)" onclick="olvidePin()">Olvidé mi PIN</button></p>
+</section>
+
+<!-- REGISTRO -->
+<section id="v-registro" class="entrar oculto">
+  <button class="link" onclick="ir('entrar')">← Volver</button>
+  <h1 style="font-size:2rem;margin:.6rem 0 .3rem">Crea tu cuenta</h1>
+  <p style="color:var(--suave);margin:0 0 1.3rem;font-size:.92rem">Con tu cuenta reservas, cancelas y ves tu plan desde el celular.</p>
+  <form id="f-registro">
+    <label class="campo"><span>Nombre y apellido</span><input class="entrada" name="nombre" required autocomplete="name"></label>
+    <div class="fila2">
+      <label class="campo"><span>RUT</span><input class="entrada" name="rut" required placeholder="12.345.678-9"></label>
+      <label class="campo"><span>Teléfono</span><input class="entrada" name="telefono" required inputmode="tel" placeholder="9 1234 5678" autocomplete="tel"></label>
+    </div>
+    <label class="campo"><span>Correo</span><input class="entrada" name="correo" type="email" required autocomplete="email"></label>
+    <label class="campo"><span>Cumpleaños (opcional)</span>
+      <div class="fila2"><select class="entrada" name="dia"><option value="">Día</option></select><select class="entrada" name="mes"><option value="">Mes</option></select></div>
+    </label>
+    <div class="fila2">
+      <label class="campo"><span>Crea tu PIN</span><input class="entrada pin" name="pin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" required placeholder="••••" autocomplete="new-password"></label>
+      <label class="campo"><span>Repite el PIN</span><input class="entrada pin" name="pin2" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" required placeholder="••••" autocomplete="new-password"></label>
+    </div>
+    <label class="campo"><span>¿Alguna lesión, embarazo o condición que la profe deba saber?</span><textarea class="entrada" name="obs_salud" placeholder="Opcional"></textarea></label>
+    <label class="check"><input type="checkbox" name="mostrar" checked><span>Mostrar mi nombre a las compañeras de mi clase</span></label>
+    <label class="check"><input type="checkbox" name="consent" required><span>Acepto que Aura guarde estos datos para cuidar mi práctica. Solo los ve la profesora.</span></label>
+    <label class="check" id="chk-pol"><input type="checkbox" name="politicas" required><span>Leí y acepto las <button type="button" class="link" style="padding:0" onclick="verPoliticas()">políticas de Aura</button></span></label>
+    <button class="btn bloque" type="submit" style="margin-top:.6rem">Crear cuenta</button>
+  </form>
+</section>
+
+<!-- APP -->
+<div id="v-app" class="app oculto">
+  <header class="cabeza">
+    <div class="marca"><div class="aura">AURA</div><div class="studio">STUDIO PILATES</div></div>
+    <button class="ini av" id="ini" onclick="tab('perfil')" style="width:38px;height:38px">A</button>
+  </header>
+  <main id="contenido"></main>
+  <nav class="abajo"><div class="in">
+    <button data-tab="inicio" onclick="tab('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg>Inicio</button>
+    <button data-tab="clases" onclick="tab('clases')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Clases</button>
+    <button data-tab="tienda" onclick="tab('tienda')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>Tienda</button>
+    <button data-tab="plan" onclick="tab('plan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5 14.6 9l5.9.6-4.4 4 1.3 5.9L12 16.6l-5.4 2.9 1.3-5.9-4.4-4L9.4 9z"/></svg>Mi plan</button>
+    <button data-tab="perfil" onclick="tab('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-3.8 4-5.5 7.5-5.5s6.3 1.7 7.5 5.5"/></svg>Perfil</button>
+  </div></nav>
+</div>
+<div id="toast"></div>
+
+<script>
+var TK = 'aura_tk', token = localStorage.getItem(TK) || '';
+var pub = null, yo = null, diaSel = null, cacheClases = null;
+var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+var DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+var DIAS_L = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+var $ = function (s) { return document.querySelector(s); };
+function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function plata(n) { return '$' + Number(n).toLocaleString('es-CL'); }
+function dObj(f) { var p = f.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+function fLarga(f) { var d = dObj(f); return DIAS_L[d.getUTCDay()] + ' ' + d.getUTCDate() + ' de ' + MESES_L[d.getUTCMonth()]; }
+function mayus(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+function fCorta(f) { var d = dObj(f); return d.getUTCDate() + ' ' + MESES[d.getUTCMonth()]; }
+function toast(t) { var e = $('#toast'); e.textContent = t; e.classList.add('ver'); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove('ver'); }, 3200); }
+function api(a, args) {
+  return Aura.llamar(a, args, token).catch(function (e) {
+    if (e.codigo === 'sesion') { salir(); }
+    toast(e.mensaje || 'Algo salió mal'); throw e;
+  });
+}
+function modal(html) {
+  cerrarModal();
+  var v = document.createElement('div'); v.className = 'velo'; v.id = 'velo';
+  v.innerHTML = '<div class="modal">' + html + '</div>';
+  v.addEventListener('click', function (e) { if (e.target === v) cerrarModal(); });
+  document.body.appendChild(v);
+}
+function cerrarModal() { var v = $('#velo'); if (v) v.remove(); }
+function ws(texto) { return 'https://wa.me/' + (pub && pub.whatsapp || '') + '?text=' + encodeURIComponent(texto); }
+
+/* ---------- Vistas ---------- */
+function ir(v) {
+  ['entrar', 'registro', 'app'].forEach(function (x) { $('#v-' + x).classList.toggle('oculto', x !== v); });
+  window.scrollTo(0, 0);
+}
+function salir() { token = ''; localStorage.removeItem(TK); yo = null; ir('entrar'); }
+function reiniciar() { Aura.reiniciarDemo(); salir(); toast('Demo reiniciada'); }
+function olvidePin() {
+  if (pub && pub.whatsapp) location.href = ws('Hola, olvidé mi PIN de la app de Aura. Mi nombre es ');
+  else toast('Pídele a Constanza que te asigne un PIN nuevo.');
+}
+
+$('#f-entrar').addEventListener('submit', function (e) {
+  e.preventDefault(); var f = e.target, b = f.querySelector('button'); b.disabled = true;
+  Aura.llamar('entrar', { usuario: f.usuario.value, pin: f.pin.value }).then(function (r) {
+    token = r.token; localStorage.setItem(TK, token); f.pin.value = ''; empezar();
+  }).catch(function (e) { toast(e.mensaje); }).then(function () { b.disabled = false; });
+});
+
+(function () {
+  var f = $('#f-registro');
+  for (var i = 1; i <= 31; i++) f.dia.insertAdjacentHTML('beforeend', '<option>' + i + '</option>');
+  MESES_L.forEach(function (m, i) { f.mes.insertAdjacentHTML('beforeend', '<option value="' + (i + 1) + '">' + m + '</option>'); });
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (f.pin.value !== f.pin2.value) return toast('Los PIN no coinciden');
+    var b = f.querySelector('button[type=submit]'); b.disabled = true;
+    var cumple = f.dia.value && f.mes.value ? ('0' + f.dia.value).slice(-2) + '-' + ('0' + f.mes.value).slice(-2) : '';
+    Aura.llamar('registro', { nombre: f.nombre.value, rut: f.rut.value, correo: f.correo.value, telefono: f.telefono.value,
+      pin: f.pin.value, fecha_nacimiento: cumple, obs_salud: f.obs_salud.value, mostrar_nombre: f.mostrar.checked,
+      consentimiento_salud: f.consent.checked }).then(function (r) {
+      token = r.token; localStorage.setItem(TK, token); f.reset(); toast('¡Bienvenida a Aura!'); empezar();
+    }).catch(function (e) { toast(e.mensaje); }).then(function () { b.disabled = false; });
+  });
+})();
+
+function tab(t) {
+  document.querySelectorAll('nav.abajo button').forEach(function (b) { b.classList.toggle('activo', b.dataset.tab === t); });
+  window.scrollTo(0, 0);
+  ({ inicio: vInicio, clases: vClases, tienda: vTienda, plan: vPlan, perfil: vPerfil })[t]();
+}
+function cargarYo() { return api('yo').then(function (r) { yo = r; var i = $('#ini'); i.textContent = r.perfil.nombre.charAt(0); i.dataset.foto = r.perfil.foto || ''; Aura.pintarFotos(i.parentNode, token); return r; }); }
+function iniciales(n) { var p = String(n).split(' '); return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
+function verPoliticas() {
+  modal('<h3>Políticas de Aura</h3><div class="texto-pol">' + esc(pub.politicas || 'Pronto publicaremos las políticas del estudio.') + '</div><button class="btn bloque" style="margin-top:1.2rem" onclick="cerrarModal()">Entendido</button>');
+}
+function empezar() {
+  ir('app'); $('#contenido').innerHTML = '<div class="cargando">Cargando…</div>';
+  cargarYo().then(function () { tab('inicio'); });
+}
+
+/* ---------- INICIO ---------- */
+function vInicio() {
+  var c = $('#contenido'), nombre = yo.perfil.nombre.split(' ')[0];
+  var vig = yo.planes.filter(function (p) { return p.vigente; });
+  var vence = vig.map(function (p) { return p.vence; }).filter(Boolean).sort()[0];
+  var h = '<h1 class="saludo">Hola, ' + esc(nombre) + '<small>' + mayus(fLarga(pub.hoy)) + '</small></h1>';
+  if (yo.cumple) h += '<div class="aviso cumple"><b>¡Feliz cumpleaños, ' + esc(nombre) + '!</b> Todo el equipo de Aura te saluda.' + (yo.regalo_cumple ? ' 🎁 ' + esc(yo.regalo_cumple) + '.' : '') + '</div>';
+  if (yo.deudas) h += '<div class="aviso deuda">Tienes ' + yo.deudas + (yo.deudas > 1 ? ' clases' : ' clase') + ' sin plan. Renueva tu plan para dejarla al día.</div>';
+  h += '<div class="saldo"><div class="n">' + yo.saldo + '</div><div class="t">' + (yo.saldo === 1 ? 'clase disponible' : 'clases disponibles') + '</div>' +
+    '<div class="v">' + (vig.length ? (vence ? 'Tu plan vence el ' + fLarga(vence) : 'Tu plan no tiene vencimiento') : 'No tienes un plan activo') + '</div></div>';
+  h += '<div class="seccion"><h2>Tus próximas clases</h2><button class="link" onclick="tab(\'clases\')">Reservar</button></div><div class="lista">';
+  if (!yo.proximas.length) h += '<div class="tarjeta vacio">No tienes clases reservadas.<br><button class="btn" style="margin-top:.9rem" onclick="tab(\'clases\')">Reservar una clase</button></div>';
+  yo.proximas.forEach(function (r) {
+    var d = dObj(r.fecha);
+    h += '<div class="tarjeta prox"><div class="fecha-caja"><div class="d">' + d.getUTCDate() + '</div><div class="m">' + MESES[d.getUTCMonth()] + '</div></div>' +
+      '<div class="info"><div class="h">' + r.inicio + ' · Reformer</div><div class="s">' + DIAS_L[d.getUTCDay()] + (r.sin_plan ? ' · <span class="chip alerta">sin plan</span>' : '') + '</div></div>' +
+      '<button class="btn borde peq" onclick="pedirCancelar(\'' + r.id + '\',\'' + r.clase_id + '\')">Cancelar</button></div>';
+  });
+  h += '</div>';
+  if (yo.espera.length) {
+    h += '<div class="seccion"><h2>En lista de espera</h2></div><div class="lista">';
+    yo.espera.forEach(function (e) { h += '<div class="tarjeta prox"><div class="info"><div class="h">' + fLarga(e.fecha) + ' · ' + e.inicio + '</div><div class="s">Si se libera un cupo quedas reservada y te avisamos por correo.</div></div></div>'; });
+    h += '</div>';
+  }
+  if (pub.eventos && pub.eventos.length) {
+    h += '<div class="seccion"><h2>Próximos eventos</h2></div><div class="lista">' + pub.eventos.slice(0, 4).map(function (e) {
+      var d = dObj(e.fecha);
+      return '<div class="tarjeta evento"><div class="fecha-caja"><div class="d">' + d.getUTCDate() + '</div><div class="m">' + MESES[d.getUTCMonth()] + '</div></div><div style="flex:1;min-width:0"><div class="h" style="font-weight:800">' + esc(e.titulo) + '</div>' +
+        '<div class="s" style="font-size:.83rem;color:var(--suave)">' + (e.hora ? e.hora + ' · ' : '') + esc(e.lugar || '') + (e.precio ? ' · ' + plata(e.precio) : ' · Gratis') + '</div>' +
+        (e.descripcion ? '<div style="font-size:.85rem;margin-top:.3rem">' + esc(e.descripcion) + '</div>' : '') +
+        '<a class="link" style="padding:.4rem 0 0;display:inline-block" target="_blank" href="' + ws('Hola Constanza, quiero inscribirme en ' + e.titulo + ' (' + fCorta(e.fecha) + '). Soy ' + yo.perfil.nombre + '.') + '">Quiero ir</a></div></div>';
+    }).join('') + '</div>';
+  }
+  c.innerHTML = h;
+}
+
+/* ---------- CLASES ---------- */
+function vClases() {
+  var c = $('#contenido');
+  c.innerHTML = '<h1 class="saludo" style="font-size:1.7rem">Reserva tu clase<small>Pilates reformer full body · 50 min · se reserva ' + esc(pub.texto_cierre) + '</small></h1>' +
+    '<button class="btn claro serie-btn" onclick="abrirSerie()">Reservar mi horario del mes</button><div class="dias" id="dias"></div><div id="lista-clases" class="lista"><div class="cargando">Cargando horario…</div></div>';
+  api('clases', { dias: pub.dias_adelanto + 1 }).then(function (dias) {
+    cacheClases = dias;
+    if (!diaSel || !dias.some(function (d) { return d.fecha === diaSel; })) {
+      var conCupo = dias.filter(function (d) { return d.clases.some(function (k) { return k.abierta; }); })[0];
+      diaSel = (conCupo || dias[0]).fecha;
+    }
+    pintarDias(); pintarClases();
+  });
+}
+function abrirSerie() {
+  var horas = {};
+  (cacheClases || []).forEach(function (d) { d.clases.forEach(function (k) { var dw = (dObj(d.fecha).getUTCDay() + 6) % 7 + 1; (horas[dw] = horas[dw] || {})[k.inicio] = 1; }); });
+  var dias = Object.keys(horas).sort();
+  modal('<h3>Tu horario del mes</h3><p class="sub">Elige tu día y hora. Reservamos esa clase todas las semanas hasta que se acabe tu plan o venza.</p>' +
+    '<div class="fila2"><select class="entrada" id="se-d" onchange="horasSerie()">' + dias.map(function (d) { return '<option value="' + d + '">' + DIAS_L[d % 7].replace(/^./, function (x) { return x.toUpperCase(); }) + '</option>'; }).join('') + '</select>' +
+    '<select class="entrada" id="se-h" onchange="previaSerie()"></select></div><div id="se-prev" style="margin-top:.9rem"></div>' +
+    '<div class="botones"><button class="btn claro" onclick="cerrarModal()">Volver</button><button class="btn" id="b-ok" onclick="confirmarSerie()" disabled>Reservar</button></div>');
+  window._horasSerie = horas; horasSerie();
+}
+function horasSerie() {
+  var d = $('#se-d').value;
+  $('#se-h').innerHTML = Object.keys(window._horasSerie[d] || {}).sort().map(function (h) { return '<option>' + h + '</option>'; }).join('');
+  previaSerie();
+}
+var EST_SERIE = { disponible: 'Se reserva', reservada: 'Reservada ✓', ya: 'Ya la tenías', llena: 'Llena', cerrada: 'Cerrada', sin_saldo: 'Sin clases en tu plan' };
+function pintarSerie(r, hecha) {
+  var n = r.clases.filter(function (c) { return c.estado === (hecha ? 'reservada' : 'disponible'); }).length;
+  $('#se-prev').innerHTML = (r.clases.length ? r.clases.map(function (c) {
+    var ok = c.estado === 'disponible' || c.estado === 'reservada' || c.estado === 'ya';
+    return '<div class="dato"><span>' + mayus(fLarga(c.fecha)) + '</span><b style="color:' + (ok ? 'var(--morado)' : 'var(--suave)') + '">' + (EST_SERIE[c.estado] || c.estado) + '</b></div>';
+  }).join('') : '<p class="vacio">No hay clases a esa hora.</p>') +
+    (hecha ? '<p style="font-size:.88rem;margin-top:.8rem"><b>' + n + (n === 1 ? ' clase reservada' : ' clases reservadas') + '.</b> Te quedan ' + r.saldo + '.</p>'
+           : (n ? '<p style="font-size:.85rem;color:var(--suave)">Se usarán ' + n + ' de tus ' + r.saldo_antes + ' clases disponibles.</p>' : (r.saldo_antes ? '' : '<div class="aviso deuda" style="margin-top:.8rem">No tienes clases disponibles. Compra un pack en la Tienda.</div>')));
+  var b = $('#b-ok'); if (b) { b.disabled = hecha || !n; if (hecha) { b.textContent = 'Listo'; b.disabled = false; b.onclick = function () { cerrarModal(); cargarYo().then(vClases); }; } }
+}
+function previaSerie() {
+  $('#se-prev').innerHTML = '<div class="cargando">Revisando…</div>';
+  api('serie', { dia_semana: +$('#se-d').value, inicio: $('#se-h').value }).then(function (r) { pintarSerie(r, false); });
+}
+function confirmarSerie() {
+  $('#b-ok').disabled = true;
+  api('serie', { dia_semana: +$('#se-d').value, inicio: $('#se-h').value, confirmar: true }).then(function (r) { pintarSerie(r, true); });
+}
+function pintarDias() {
+  $('#dias').innerHTML = cacheClases.map(function (d) {
+    var o = dObj(d.fecha), hay = d.clases.some(function (k) { return k.abierta || k.mi_reserva; });
+    return '<button class="dia' + (d.fecha === diaSel ? ' activo' : '') + (hay ? '' : ' sin') + '" onclick="elegirDia(\'' + d.fecha + '\')"><div class="ds">' +
+      (d.fecha === pub.hoy ? 'hoy' : DIAS[o.getUTCDay()]) + '</div><div class="dn">' + o.getUTCDate() + '</div></button>';
+  }).join('');
+  var a = $('#dias .activo'); if (a) a.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+function elegirDia(f) { diaSel = f; pintarDias(); pintarClases(); }
+function pintarClases() {
+  var d = cacheClases.filter(function (x) { return x.fecha === diaSel; })[0];
+  var cont = $('#lista-clases');
+  if (!d.clases.length) { cont.innerHTML = '<div class="tarjeta vacio">No hay clases este día.</div>'; return; }
+  cont.innerHTML = '<p style="margin:.2rem 0 .6rem;font-weight:800">' + mayus(fLarga(d.fecha)) + '</p>' + d.clases.map(tarjetaClase).join('');
+  Aura.pintarFotos(cont, token);
+}
+function tarjetaClase(k) {
+  var puntos = '';
+  var yoIdx = -1; k.asistentes.forEach(function (a, i) { if (a.yo) yoIdx = i; });
+  for (var i = 0; i < k.cupos; i++) puntos += '<i class="' + (i < k.ocupados ? (i === yoIdx ? 'yo' : 'on') : '') + '"></i>';
+  var estado, boton;
+  if (k.estado === 'feriado' || k.estado === 'cancelada') { estado = '<span class="chip gris">Suspendida</span>'; boton = '<span class="cupos">' + esc(k.motivo || '') + '</span>'; }
+  else if (k.mi_reserva) {
+    estado = '<span class="chip">Reservada</span>';
+    boton = k.pasada ? '' : '<button class="btn borde peq" onclick="pedirCancelar(\'' + k.mi_reserva + '\',\'' + k.id + '\')">Cancelar</button>';
+  } else if (k.pasada) { estado = '<span class="chip gris">Terminada</span>'; boton = ''; }
+  else if (!k.abierta) { estado = '<span class="chip gris">Cerrada</span>'; boton = '<span class="cupos">Se reservaba ' + esc(pub.texto_cierre) + '</span>'; }
+  else if (k.en_espera) { estado = '<span class="chip rosa">En espera · ' + k.en_espera + '°</span>'; boton = '<button class="btn borde peq" onclick="salirEspera(\'' + k.id + '\')">Salir de la lista</button>'; }
+  else if (k.libres === 0) { estado = '<span class="chip rosa">Llena</span>'; boton = '<button class="btn claro peq" onclick="esperar(\'' + k.id + '\')">Lista de espera</button>'; }
+  else { estado = '<span class="chip salvia">' + k.libres + (k.libres === 1 ? ' cupo' : ' cupos') + '</span>'; boton = '<button class="btn peq" onclick="pedirReserva(\'' + k.id + '\')">Reservar</button>'; }
+  var quienes = k.asistentes.length ? '<button class="ver-quien" onclick="this.nextElementSibling.classList.toggle(\'oculto\')">Quién viene (' + k.asistentes.length + ')</button><div class="quienes oculto">' +
+    k.asistentes.map(function (a) { return '<span class="n' + (a.yo ? ' tu' : '') + '"><span class="av" data-foto="' + esc(a.foto) + '">' + iniciales(a.nombre) + '</span>' + esc(a.nombre) + '</span>'; }).join('') + '</div>' : '';
+  return '<div class="clase' + (k.mi_reserva ? ' mia' : '') + '"><div class="top"><div><div class="hora">' + k.inicio + '</div><div class="tipo">' + esc(k.tipo) + ' · hasta ' + k.fin + '</div></div>' + estado + '</div>' +
+    '<div class="puntos">' + puntos + '</div><div class="pie"><span class="cupos">' + k.ocupados + ' de ' + k.cupos + ' reformers</span>' + boton + '</div>' + quienes + '</div>';
+}
+function buscarClase(id) {
+  var r = null; (cacheClases || []).forEach(function (d) { d.clases.forEach(function (k) { if (k.id === id) r = k; }); }); return r;
+}
+function pedirReserva(id) {
+  var k = buscarClase(id), sin = yo.saldo < 1;
+  modal('<h3>Reservar clase</h3><p class="sub">' + fLarga(k.fecha) + '<br>' + k.inicio + ' a ' + k.fin + ' · ' + esc(k.tipo) + '</p>' +
+    (sin ? '<div class="aviso deuda">No tienes clases disponibles. Puedes reservar igual y queda pendiente de pago hasta que renueves tu plan.</div>'
+         : '<div class="dato"><span>Se descuenta de tu saldo</span><b>1 clase</b></div><div class="dato"><span>Te quedarán</span><b>' + (yo.saldo - 1) + '</b></div>') +
+    '<p style="font-size:.85rem;color:var(--suave)">Puedes cancelar sin costo hasta ' + pub.horas_cancelacion + ' horas antes.</p>' +
+    '<div class="botones"><button class="btn claro" onclick="cerrarModal()">Volver</button><button class="btn" id="b-ok" onclick="reservar(\'' + id + '\')">Confirmar</button></div>');
+}
+function reservar(id) {
+  $('#b-ok').disabled = true;
+  api('reservar', { clase_id: id }).then(function (r) {
+    var k = buscarClase(id);
+    modal('<div class="ok-grande"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>' +
+      '<h3 style="text-align:center">¡Nos vemos en clase!</h3><p class="sub" style="text-align:center">' + fLarga(k.fecha) + ' a las ' + k.inicio + '</p>' +
+      '<div class="dato"><span>Clases que te quedan</span><b>' + r.saldo + '</b></div>' +
+      (r.sin_plan ? '<div class="aviso deuda" style="margin-top:.8rem">Esta clase quedó pendiente de pago.</div>' : '') +
+      '<p style="font-size:.85rem;color:var(--suave)">Llega 5 minutos antes y trae calcetines antideslizantes.</p>' +
+      '<button class="btn bloque" onclick="cerrarModal()">Listo</button>');
+    return cargarYo().then(vClases);
+  }).catch(function () { cerrarModal(); vClases(); });
+}
+function pedirCancelar(rid, cid) {
+  var f = cid.split('T'), ms = Aura.util.msDe(f[0], f[1]);
+  var ahora = Aura.util.msDe(pub.hoy, pub.ahora), aTiempo = ms - ahora > pub.horas_cancelacion * 3600000;
+  modal('<h3>¿Cancelar la clase?</h3><p class="sub">' + fLarga(f[0]) + ' · ' + f[1] + '</p>' +
+    (aTiempo ? '<div class="aviso cumple" style="background:var(--salvia-claro);color:#4F6A4A">Cancelas a tiempo: la clase vuelve a tu saldo.</div>'
+             : '<div class="aviso deuda">Faltan menos de ' + pub.horas_cancelacion + ' horas: si cancelas, <b>la clase se descuenta igual</b>.</div>') +
+    '<div class="botones"><button class="btn claro" onclick="cerrarModal()">No, mantener</button><button class="btn rosa" id="b-ok" onclick="cancelar(\'' + rid + '\')">Sí, cancelar</button></div>');
+}
+function cancelar(rid) {
+  $('#b-ok').disabled = true;
+  api('cancelar', { reserva_id: rid }).then(function (r) {
+    cerrarModal(); toast(r.devuelta ? 'Cancelada. La clase volvió a tu saldo.' : 'Cancelada.');
+    return Promise.all([cargarYo(), refrescarPub()]).then(function () { tab(document.querySelector('nav.abajo .activo').dataset.tab); });
+  }).catch(cerrarModal);
+}
+function esperar(id) {
+  api('esperar', { clase_id: id }).then(function (r) { toast('Estás ' + r.posicion + '° en la lista de espera'); return cargarYo().then(vClases); });
+}
+function salirEspera(id) { api('salirEspera', { clase_id: id }).then(function () { toast('Saliste de la lista'); return cargarYo().then(vClases); }); }
+
+/* ---------- MI PLAN ---------- */
+function vPlan() {
+  var h = '<h1 class="saludo" style="font-size:1.7rem">Mi plan</h1><div class="lista">';
+  var vig = yo.planes.filter(function (p) { return p.estado === 'activo' && !p.vencido && (p.vigente || p.usadas > 0); })
+    .sort(function (a, b) { return (b.libres > 0) - (a.libres > 0); }).slice(0, 4);
+  if (!vig.length) h += '<div class="tarjeta vacio">No tienes un plan activo.</div>';
+  vig.forEach(function (p) {
+    h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.vence ? 'Vence el ' + fLarga(p.vence) : 'Sin vencimiento') + '</div></div>' +
+      '<div style="text-align:right"><div class="pre">' + p.libres + '/' + p.total + '</div><div class="det">' + (p.libres ? 'disponibles' : 'agotado') + '</div></div></div>' +
+      '<div class="barra"><i style="width:' + Math.round(p.libres / p.total * 100) + '%"></i></div></div>';
+  });
+  h += '</div><button class="btn claro bloque" style="margin-top:.9rem" onclick="tab(\'tienda\')">Comprar o renovar pack</button>';
+  var hist = yo.historial.filter(function (r) { return r.estado !== 'cancelada'; }).slice(0, 8);
+  if (hist.length) {
+    var EST = { 'asistió': 'Asististe', 'faltó': 'No asististe', 'tardía': 'Cancelada tarde', 'reservada': 'Reservada' };
+    h += '<div class="seccion"><h2>Últimas clases</h2></div><div class="tarjeta">' + hist.map(function (r) {
+      return '<div class="dato"><span>' + fCorta(r.fecha) + ' · ' + r.inicio + '</span><b style="font-weight:700">' + (EST[r.estado] || r.estado) + '</b></div>';
+    }).join('') + '</div>';
+  }
+  $('#contenido').innerHTML = h;
+}
+function loQuiero(id) {
+  var p = pub.planes.filter(function (x) { return x.id === id; })[0];
+  modal('<h3>' + esc(p.nombre) + '</h3><p class="sub">' + p.clases + (p.clases === 1 ? ' clase' : ' clases') + ' · ' + (p.dias ? p.dias + ' días' : 'sin vencimiento') + ' · <b>' + plata(p.precio) + '</b></p>' +
+    (pub.transferencia ? '<div class="tarjeta" style="box-shadow:none;background:var(--fondo);font-size:.9rem"><b>Transferencia</b><br>' + esc(pub.transferencia) + '</div>' : '') +
+    '<p style="font-size:.88rem;color:var(--suave)">Transfiere y mándanos el comprobante por WhatsApp. Constanza activa tu plan y lo ves aquí al tiro.</p>' +
+    '<a class="btn ws bloque" target="_blank" href="' + ws('Hola Constanza, quiero el plan ' + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Escribir por WhatsApp</a>');
+}
+
+/* ---------- TIENDA ---------- */
+function vTienda() {
+  var h = '<h1 class="saludo" style="font-size:1.7rem">Tienda<small>Packs de clases y accesorios. Pides por WhatsApp y pagas por transferencia.</small></h1>';
+  h += '<div class="seccion" style="margin-top:.4rem"><h2>Packs de clases</h2></div><div class="lista">';
+  pub.planes.forEach(function (p) {
+    h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.clases === 1 ? (p.dias ? '1 clase' : 'Clase suelta') : p.clases + ' clases') + ' · ' +
+      (p.dias ? 'para usar en ' + p.dias + ' días' : 'sin vencimiento') + '</div></div><div class="pre">' + plata(p.precio) + '</div></div>' +
+      '<button class="btn claro bloque peq" style="margin-top:.8rem" onclick="loQuiero(\'' + p.id + '\')">Lo quiero</button></div>';
+  });
+  h += '</div>';
+  if (pub.productos && pub.productos.length) {
+    h += '<div class="seccion"><h2>Accesorios</h2></div><div class="lista">';
+    pub.productos.forEach(function (p) {
+      var agotado = p.stock !== null && p.stock <= 0;
+      h += '<div class="tarjeta prod"><span class="img" data-foto="' + esc(p.foto) + '">' + esc(p.nombre.charAt(0)) + '</span><div style="flex:1;min-width:0"><div style="font-weight:800">' + esc(p.nombre) + '</div>' +
+        '<div style="font-size:.82rem;color:var(--suave)">' + esc(p.descripcion) + '</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem"><span class="pre" style="font-family:var(--serif);font-size:1.2rem;font-weight:600">' + plata(p.precio) + '</span>' +
+        (agotado ? '<span class="chip gris">Agotado</span>' : '<a class="btn claro peq" target="_blank" href="' + ws('Hola Constanza, quiero ' + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Lo quiero</a>') + '</div></div></div>';
+    });
+    h += '</div>';
+  }
+  $('#contenido').innerHTML = h; Aura.pintarFotos($('#contenido'), token);
+}
+
+/* ---------- PERFIL ---------- */
+function vPerfil() {
+  var p = yo.perfil;
+  $('#contenido').innerHTML = '<div class="perfil-top"><label class="foto-sub" title="Cambiar foto"><span class="av g" data-foto="' + esc(p.foto) + '">' + iniciales(p.nombre) + '</span><span class="lapiz">✎</span>' +
+    '<input type="file" accept="image/*" onchange="subirMiFoto(this)"></label><h1 class="saludo" style="font-size:1.6rem">' + esc(p.nombre) + '<small>' + esc(p.correo) + '</small></h1></div>' +
+    '<div class="tarjeta"><div class="dato"><span>RUT</span><b>' + esc(p.rut) + '</b></div><div class="dato"><span>Teléfono</span><b>' + esc(p.telefono) + '</b></div>' +
+    '<div class="dato" style="border:0"><span>Cumpleaños</span><b>' + (p.fecha_nacimiento ? esc(p.fecha_nacimiento.split('-')[0] + ' de ' + MESES_L[+p.fecha_nacimiento.split('-')[1] - 1]) : '—') + '</b></div></div>' +
+    '<div class="tarjeta" style="margin-top:.8rem"><div class="interruptor" style="padding-top:0"><div>Mostrar mi nombre<small>Tus compañeras ven tu nombre en la lista de la clase</small></div>' +
+    '<label class="sw"><input type="checkbox" id="sw-nombre"' + (p.mostrar_nombre ? ' checked' : '') + '><i></i></label></div>' +
+    '<label class="campo" style="margin:.9rem 0 .4rem"><span>Salud (solo lo ve la profesora)</span><textarea class="entrada" id="salud">' + esc(p.obs_salud || '') + '</textarea></label>' +
+    '<button class="btn claro peq" onclick="guardarSalud()">Guardar</button></div>' +
+    '<div class="tarjeta" style="margin-top:.8rem"><b>Cambiar PIN</b><div class="fila2" style="margin-top:.7rem"><input class="entrada pin" id="pa" type="password" inputmode="numeric" maxlength="4" placeholder="Actual"><input class="entrada pin" id="pn" type="password" inputmode="numeric" maxlength="4" placeholder="Nuevo"></div>' +
+    '<button class="btn claro peq" style="margin-top:.7rem" onclick="cambiarPin()">Cambiar PIN</button></div>' +
+    '<button class="btn claro bloque" style="margin-top:1rem" onclick="verPoliticas()">Políticas de Aura</button>' +
+    (pub.whatsapp ? '<a class="btn ws bloque" style="margin-top:.7rem" target="_blank" href="' + ws('Hola Constanza, ') + '">Escribir a Aura por WhatsApp</a>' : '') +
+    (pub.soporte ? '<a class="btn borde bloque" style="margin-top:.7rem" target="_blank" href="https://wa.me/' + pub.soporte + '?text=' + encodeURIComponent('Hola, tengo un problema con la app de Aura: ') + '">¿Problemas con la app? Soporte</a>' : '') +
+    '<button class="btn borde bloque" style="margin-top:.7rem" onclick="salir()">Cerrar sesión</button>' +
+    '<p style="text-align:center;font-size:.75rem;color:var(--suave);margin-top:1.5rem">Aura Studio Pilates · Illapel</p>';
+  Aura.pintarFotos($('#contenido'), token);
+  $('#sw-nombre').addEventListener('change', function (e) {
+    api('guardarPerfil', { mostrar_nombre: e.target.checked }).then(function (r) { yo.perfil = r.perfil; toast(e.target.checked ? 'Tu nombre se muestra' : 'Tu nombre queda oculto'); });
+  });
+}
+function subirMiFoto(input) {
+  var f = input.files[0]; if (!f) return;
+  Aura.achicarFoto(f, 200).then(function (data) { return api('subirFoto', { data: data }); })
+    .then(function () { sessionStorage.removeItem('aura_fotos'); toast('Foto actualizada'); return cargarYo(); }).then(vPerfil)
+    .catch(function (e) { if (e && e.mensaje) toast(e.mensaje); });
+}
+function guardarSalud() { api('guardarPerfil', { obs_salud: $('#salud').value }).then(function (r) { yo.perfil = r.perfil; toast('Guardado'); }); }
+function cambiarPin() {
+  api('guardarPerfil', { pin_actual: $('#pa').value, pin_nuevo: $('#pn').value }).then(function () { $('#pa').value = $('#pn').value = ''; toast('PIN cambiado'); });
+}
+
+/* ---------- Arranque ---------- */
+function refrescarPub() { return Aura.llamar('publico').then(function (r) { pub = r; }); }
+if (Aura.demo) $('#demo').classList.remove('oculto');
+refrescarPub().then(function () {
+  if (!pub.politicas) { $('#chk-pol').remove(); }
+  if (token) empezar(); else ir('entrar');
+}).catch(function () { ir('entrar'); toast('No pudimos conectar con el servidor'); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+</script>
+</body>
+</html>

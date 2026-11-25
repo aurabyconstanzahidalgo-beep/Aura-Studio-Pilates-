@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel · Aura Studio Pilates</title>
+<meta name="theme-color" content="#6B4C8A">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito+Sans:opsz,wght@6..12,400;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="aura.css">
+<style>
+  .barra-sup { background: #fff; border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 10; }
+  .barra-sup .in { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; gap: .8rem; padding: .6rem 1.1rem; }
+  .barra-sup .marca { text-align: left; flex: none; }
+  .barra-sup .marca .aura { font-size: 1.3rem; padding-left: 0; }
+  .barra-sup .marca .studio { font-size: .48rem; padding-left: 0; }
+  .pestanas { display: flex; gap: .2rem; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+  .pestanas::-webkit-scrollbar { display: none; }
+  .pestanas button { border: 0; background: none; padding: .5rem .8rem; border-radius: 999px; font-weight: 800; color: var(--suave); cursor: pointer; white-space: nowrap; }
+  .pestanas button.activo { background: var(--lavanda); color: var(--morado-osc); }
+  .cuerpo { max-width: 1040px; margin: 0 auto; padding: 1.1rem 1.1rem 3rem; }
+  .nav-dia { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .nav-dia h1 { font-size: 1.8rem; flex: 1; min-width: 200px; }
+  .redondo { width: 40px; height: 40px; border-radius: 50%; border: 0; background: #fff; box-shadow: var(--sombra); cursor: pointer; font-size: 1.1rem; color: var(--morado); }
+  .resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem; margin-bottom: 1.1rem; }
+  .resumen .tarjeta { padding: .9rem 1rem; }
+  .resumen .n { font-family: var(--serif); font-size: 1.9rem; font-weight: 600; line-height: 1.05; color: var(--morado); }
+  .resumen .n.neg { color: var(--alerta); }
+  .resumen .t { font-size: .78rem; color: var(--suave); font-weight: 700; }
+  .grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .9rem; }
+  .cl-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+  .cl-cab .h { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; }
+  .persona { display: flex; align-items: center; gap: .6rem; padding: .6rem 0; border-top: 1px solid var(--linea); }
+  .persona .datos { flex: 1; min-width: 0; }
+  .persona .nom { font-weight: 800; font-size: .92rem; cursor: pointer; }
+  .persona .flags { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
+  .asis { display: flex; gap: .25rem; }
+  .asis button { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--linea); background: #fff; cursor: pointer; font-weight: 800; color: var(--suave); }
+  .asis button.si.on { background: var(--salvia); border-color: var(--salvia); color: #fff; }
+  .asis button.no.on { background: var(--alerta); border-color: var(--alerta); color: #fff; }
+  .persona.tardia { opacity: .55; }
+  .mini { font-size: .8rem; color: var(--suave); }
+  .acciones { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .7rem; }
+  .barra-acc { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .buscar { display: flex; gap: .6rem; margin-bottom: 1rem; }
+  table.tabla { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: var(--sombra); font-size: .9rem; }
+  .tabla th { text-align: left; font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--suave); padding: .7rem .8rem; background: #FBF9FA; }
+  .tabla td { padding: .65rem .8rem; border-top: 1px solid var(--linea); vertical-align: middle; }
+  .tabla td.num, .tabla th.num { text-align: right; white-space: nowrap; }
+  .tabla tr.fila { cursor: pointer; }
+  .tabla tr.fila:hover td { background: #FBF8FD; }
+  .tabla .quien { display: flex; align-items: center; gap: .55rem; }
+  @media (max-width: 640px) { .tabla .opc { display: none; } .resumen .n { font-size: 1.5rem; } .nav-dia h1 { font-size: 1.5rem; } }
+  .entrar { max-width: 380px; margin: 0 auto; padding: 3rem 1.4rem; }
+  .modal h3 { font-size: 1.6rem; margin-bottom: .3rem; }
+  .modal .sub { color: var(--suave); font-size: .9rem; margin-bottom: 1rem; }
+  .dato { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-bottom: 1px solid var(--linea); font-size: .9rem; }
+  .dato span:first-child { color: var(--suave); }
+  .bloque-f { margin-top: 1.1rem; }
+  .bloque-f h4, h2.sec { margin: 0 0 .5rem; font-family: var(--sans); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--suave); font-weight: 800; }
+  h2.sec { margin: 1.6rem 0 .7rem; }
+  .salud { background: #F7E4DE; color: var(--alerta); border-radius: 12px; padding: .6rem .8rem; font-size: .88rem; }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 760px) { .dos { grid-template-columns: 1fr; } }
+  .prod { display: flex; gap: .8rem; align-items: center; }
+  .prod .img { width: 64px; height: 64px; border-radius: 14px; background: var(--lavanda) center/cover; flex: none; display: grid; place-items: center; color: var(--morado); font-weight: 800; }
+  .prod .img.con-foto { color: transparent; }
+  .graf { width: 100%; height: auto; display: block; }
+  .leyenda { display: flex; gap: 1rem; font-size: .8rem; color: var(--suave); margin-top: .4rem; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; }
+  .hor-dia { margin-bottom: .9rem; }
+  .hor-dia b { display: block; margin-bottom: .35rem; }
+  .pill { display: inline-flex; align-items: center; gap: .3rem; background: var(--lavanda); color: var(--morado-osc); border-radius: 999px; padding: .3rem .4rem .3rem .75rem; margin: 0 .3rem .35rem 0; font-weight: 800; font-size: .85rem; }
+  .pill button { border: 0; background: rgba(255,255,255,.7); color: var(--alerta); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-weight: 800; }
+  .soporte-flot { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
+  #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
+</style>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<script src="api.js"></script>
+</head>
+<body>
+<div id="demo" class="banda-demo oculto">Panel de demostración · correo <b>demo@aura.cl</b> · clave <b>aura</b><button onclick="Aura.reiniciarDemo();salir()">Reiniciar</button></div>
+
+<section id="v-entrar" class="entrar oculto">
+  <div class="marca" style="margin-bottom:2rem"><div class="aura">AURA</div><div class="studio">STUDIO PILATES</div><div class="by">Panel del estudio</div></div>
+  <form id="f-entrar">
+    <label class="campo"><span>Correo</span><input class="entrada" name="correo" type="email" required autocomplete="username"></label>
+    <label class="campo"><span>Clave</span><input class="entrada" name="clave" type="password" required autocomplete="current-password"></label>
+    <button class="btn bloque">Entrar</button>
+  </form>
+</section>
+
+<div id="v-app" class="oculto">
+  <header class="barra-sup"><div class="in">
+    <div class="marca"><div class="aura">AURA</div><div class="studio">STUDIO PILATES</div></div>
+    <div class="pestanas">
+      <button data-t="dia" onclick="tab('dia')">Clases</button>
+      <button data-t="alumnas" onclick="tab('alumnas')">Alumnas</button>
+      <button data-t="reportes" onclick="tab('reportes')" class="solo-duena">Reportes</button>
+      <button data-t="tienda" onclick="tab('tienda')">Tienda y eventos</button>
+      <button data-t="ajustes" onclick="tab('ajustes')" class="solo-duena">Ajustes</button>
+      <button onclick="salir()" title="Salir">Salir</button>
+    </div>
+  </div></header>
+  <div class="cuerpo" id="cuerpo"></div>
+  <a id="soporte" class="btn ws peq soporte-flot no-print" target="_blank">Soporte de la app</a>
+</div>
+<div id="toast"></div>
+
+<script>
+var TK = 'aura_tk_panel', token = localStorage.getItem(TK) || '', rol = localStorage.getItem(TK + '_rol') || '';
+var fecha = null, hoy = null, pub = null, alumnasCache = [], mesSel = null, semanaSel = null;
+var MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+var MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+var DIAS_L = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+var DIAS_SEM = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+var $ = function (s) { return document.querySelector(s); };
+function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function plata(n) { return (n < 0 ? '-$' : '$') + Math.abs(Number(n) || 0).toLocaleString('es-CL'); }
+function dObj(f) { var p = f.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+function fLarga(f) { var d = dObj(f); return DIAS_L[d.getUTCDay()] + ' ' + d.getUTCDate() + ' de ' + MESES_L[d.getUTCMonth()]; }
+function fCorta(f) { if (!f) return '—'; var d = dObj(f); return d.getUTCDate() + ' ' + MESES[d.getUTCMonth()]; }
+function mayus(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+function nombreMes(m) { var p = m.split('-'); return mayus(MESES_L[+p[1] - 1]) + ' ' + p[0]; }
+function sumaMes(m, n) { var p = m.split('-'); var d = new Date(Date.UTC(+p[0], +p[1] - 1 + n, 1)); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2); }
+function toast(t) { var e = $('#toast'); e.textContent = t; e.classList.add('ver'); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove('ver'); }, 3200); }
+function api(a, args) { return Aura.llamar(a, args, token).catch(function (e) { if (e.codigo === 'sesion') salir(); toast(e.mensaje || 'Algo salió mal'); throw e; }); }
+function modal(html) { cerrarModal(); var v = document.createElement('div'); v.className = 'velo'; v.id = 'velo';
+  v.innerHTML = '<div class="modal">' + html + '</div>'; v.addEventListener('click', function (e) { if (e.target === v) cerrarModal(); }); document.body.appendChild(v); Aura.pintarFotos(v, token); }
+function cerrarModal() { var v = $('#velo'); if (v) v.remove(); }
+function tel(t) { t = String(t || '').replace(/\D/g, ''); if (t.length === 9) t = '56' + t; return t; }
+function ws(t, msg) { return 'https://wa.me/' + tel(t) + '?text=' + encodeURIComponent(msg); }
+function iniciales(n) { var p = String(n).split(' '); return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
+function av(nombre, foto, clase) { return '<span class="av ' + (clase || '') + '" data-foto="' + esc(foto || '') + '">' + iniciales(nombre) + '</span>'; }
+function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
+function descargar(nombre, contenido, tipo) {
+  var b = contenido instanceof Blob ? contenido : new Blob([contenido], { type: tipo || 'text/plain' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nombre; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function csv(filas) {
+  return '﻿' + filas.map(function (f) { return f.map(function (c) { c = String(c == null ? '' : c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(';'); }).join('\r\n');
+}
+
+function ir(v) { $('#v-entrar').classList.toggle('oculto', v !== 'entrar'); $('#v-app').classList.toggle('oculto', v !== 'app'); }
+function salir() { token = ''; localStorage.removeItem(TK); ir('entrar'); }
+$('#f-entrar').addEventListener('submit', function (e) {
+  e.preventDefault(); var f = e.target;
+  Aura.llamar('entrarPanel', { correo: f.correo.value, clave: f.clave.value }).then(function (r) {
+    token = r.token; rol = r.rol; localStorage.setItem(TK, token); localStorage.setItem(TK + '_rol', rol); f.clave.value = ''; empezar();
+  }).catch(function (e) { toast(e.mensaje); });
+});
+var VISTAS = {};
+function tab(t) {
+  document.querySelectorAll('.pestanas button[data-t]').forEach(function (b) { b.classList.toggle('activo', b.dataset.t === t); });
+  window.scrollTo(0, 0); VISTAS[t]();
+}
+function refrescarPub() { return Aura.llamar('publico').then(function (p) { pub = p; hoy = p.hoy; $('#soporte').href = ws(p.soporte, 'Hola Matías, tengo un problema con la app de Aura: '); }); }
+function empezar() {
+  ir('app');
+  document.querySelectorAll('.solo-duena').forEach(function (b) { b.classList.toggle('oculto', rol !== 'dueña'); });
+  refrescarPub().then(function () { fecha = fecha || hoy; mesSel = mesSel || hoy.slice(0, 7); tab('dia'); });
+}
+
+/* =================== CLASES =================== */
+function moverDia(n) { fecha = Aura.util.sumarDias(fecha, n); VISTAS.dia(); }
+VISTAS.dia = function () {
+  var c = $('#cuerpo');
+  c.innerHTML = '<div class="nav-dia"><button class="redondo" onclick="moverDia(-1)">‹</button><h1>' + (fecha === hoy ? 'Hoy, ' + fLarga(fecha) : mayus(fLarga(fecha))) + '</h1>' +
+    (fecha !== hoy ? '<button class="btn claro peq" onclick="fecha=hoy;VISTAS.dia()">Hoy</button>' : '') + '<button class="redondo" onclick="moverDia(1)">›</button></div>' +
+    '<div class="barra-acc"><button class="btn claro peq" onclick="abrirIG()">Horario para Instagram</button><button class="btn borde peq" onclick="feriadoDia()">Suspender el día (feriado)</button>' +
+    '<button class="btn borde peq" onclick="avisoTodas()">Enviar correo a todas</button></div><div id="dia-c"><div class="cargando">Cargando…</div></div>';
+  api('dia', { fecha: fecha }).then(function (d) {
+    var total = 0, cupos = 0, cumple = [];
+    d.clases.forEach(function (k) { if (k.estado !== 'feriado') { total += k.ocupados; cupos += k.cupos; }
+      k.lista.forEach(function (p) { if (p.cumple && cumple.indexOf(p.nombre) < 0) cumple.push(p.nombre); }); });
+    var h = '<div class="resumen"><div class="tarjeta"><div class="n">' + d.clases.length + '</div><div class="t">clases</div></div>' +
+      '<div class="tarjeta"><div class="n">' + total + '</div><div class="t">reservas</div></div>' +
+      '<div class="tarjeta"><div class="n">' + (cupos ? Math.round(total / cupos * 100) : 0) + '%</div><div class="t">ocupación</div></div></div>';
+    if (cumple.length) h += '<div class="tarjeta" style="background:var(--rosa-claro);color:var(--rosa);margin-bottom:1rem">🎂 De cumpleaños: <b>' + cumple.map(esc).join(', ') + '</b> · salúdala en la clase</div>';
+    if (!d.clases.length) h += '<div class="tarjeta vacio">No hay clases este día.</div>';
+    h += '<div class="grilla">' + d.clases.map(tarjetaClase).join('') + '</div>';
+    $('#dia-c').innerHTML = h; Aura.pintarFotos($('#dia-c'), token);
+  });
+};
+function tarjetaClase(k) {
+  var sus = k.estado === 'feriado';
+  var h = '<div class="tarjeta"><div class="cl-cab"><div><div class="h">' + k.inicio + '</div><div class="mini">' + esc(k.tipo) + ' · hasta ' + k.fin + '</div></div>' +
+    (sus ? '<span class="chip gris">Suspendida</span>' : '<span class="chip' + (k.ocupados >= k.cupos ? ' rosa' : ' salvia') + '">' + k.ocupados + '/' + k.cupos + '</span>') + '</div>';
+  if (sus) h += '<p class="mini">' + esc(k.motivo) + '</p>';
+  if (!k.lista.length && !sus) h += '<p class="mini" style="padding:.4rem 0">Sin reservas todavía.</p>';
+  k.lista.forEach(function (p) {
+    var flags = '';
+    if (p.primera) flags += '<span class="chip">Primera vez</span>';
+    if (p.sin_plan) flags += '<span class="chip alerta">Sin plan</span>';
+    else if (p.saldo <= 1) flags += '<span class="chip rosa">Le queda ' + p.saldo + '</span>';
+    if (p.cumple) flags += '<span class="chip rosa">🎂 Cumpleaños</span>';
+    if (p.estado === 'tardía') flags += '<span class="chip gris">Canceló tarde</span>';
+    h += '<div class="persona' + (p.estado === 'tardía' ? ' tardia' : '') + '">' + av(p.nombre, p.foto) + '<div class="datos"><div class="nom" onclick="ficha(\'' + p.alumna_id + '\')">' + esc(p.nombre) + '</div>' +
+      (p.salud ? '<div class="mini" style="color:var(--alerta)">⚠ ' + esc(p.salud) + '</div>' : '') + '<div class="flags">' + flags + '</div></div>' +
+      (p.estado === 'tardía' ? '' : '<div class="asis"><button class="si' + (p.estado === 'asistió' ? ' on' : '') + '" title="Asistió" onclick="marcar(\'' + p.reserva_id + '\',\'' + (p.estado === 'asistió' ? 'reservada' : 'asistió') + '\')">✓</button>' +
+      '<button class="no' + (p.estado === 'faltó' ? ' on' : '') + '" title="Faltó" onclick="marcar(\'' + p.reserva_id + '\',\'' + (p.estado === 'faltó' ? 'reservada' : 'faltó') + '\')">✕</button></div>') + '</div>';
+  });
+  if (k.espera.length) h += '<div class="mini" style="margin-top:.6rem"><b>Lista de espera:</b> ' + k.espera.map(function (e, i) {
+    return (i + 1) + '. <a target="_blank" href="' + ws(e.telefono, 'Hola ' + String(e.nombre).split(' ')[0] + ', se liberó un cupo en la clase de las ' + k.inicio + '. ¿Lo quieres?') + '">' + esc(e.nombre) + '</a>';
+  }).join(' · ') + '</div>';
+  h += '<div class="acciones">' + (sus ? '<button class="btn claro peq" onclick="reabrir(\'' + k.id + '\')">Reabrir clase</button>' :
+    '<button class="btn claro peq" onclick="agregar(\'' + k.id + '\')">+ Agregar alumna</button><button class="btn borde peq" onclick="suspender(\'' + k.id + '\')">Suspender</button>') + '</div></div>';
+  return h;
+}
+function marcar(id, estado) { api('asistencia', { reserva_id: id, estado: estado }).then(VISTAS.dia); }
+function suspender(id) {
+  modal('<h3>Suspender clase</h3><p class="sub">' + id.replace('T', ' · ') + '. Se cancelan las reservas, se devuelven las clases y les llega un correo.</p>' +
+    '<label class="campo"><span>Motivo (lo ven las alumnas)</span><input class="entrada" id="motivo" value="Clase suspendida"></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Volver</button><button class="btn rosa" onclick="api(\'cancelarClase\',{clase_id:\'' + id + '\',motivo:val(\'motivo\')}).then(function(r){cerrarModal();toast(\'Clase suspendida · \'+r.devueltas+\' clases devueltas\');VISTAS.dia()})">Suspender</button></div>');
+}
+function feriadoDia() {
+  modal('<h3>Suspender el día</h3><p class="sub">' + mayus(fLarga(fecha)) + '. Se suspenden todas las clases, se devuelven las clases a las alumnas y les llega un correo.</p>' +
+    '<label class="campo"><span>Motivo</span><input class="entrada" id="motivo" value="Feriado"></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Volver</button><button class="btn rosa" onclick="api(\'cancelarDia\',{fecha:fecha,motivo:val(\'motivo\')}).then(function(r){cerrarModal();toast(r.clases+\' clases suspendidas · \'+r.devueltas+\' devueltas\');VISTAS.dia()})">Suspender el día</button></div>');
+}
+function avisoTodas() {
+  modal('<h3>Correo a todas las alumnas</h3><p class="sub">Les llega a todas las alumnas activas con correo. Úsalo si no habrá clases, cambios de horario o novedades.</p>' +
+    '<label class="campo"><span>Asunto</span><input class="entrada" id="as" placeholder="Hoy no hay clases"></label>' +
+    '<label class="campo"><span>Mensaje</span><textarea class="entrada" id="tx" style="min-height:120px"></textarea></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Volver</button><button class="btn" onclick="api(\'avisoGeneral\',{asunto:val(\'as\'),texto:val(\'tx\')}).then(function(r){cerrarModal();toast(\'Correo enviado a \'+r.enviados+\' alumnas\')})">Enviar</button></div>');
+}
+function reabrir(id) { api('reabrirClase', { clase_id: id }).then(VISTAS.dia); }
+function agregar(cid) {
+  cargarAlumnas().then(function () {
+    modal('<h3>Agregar a la clase</h3><p class="sub">' + cid.replace('T', ' · ') + '</p><input class="entrada" id="q" placeholder="Buscar por nombre o RUT" oninput="filtrarAgregar(\'' + cid + '\')"><div id="res" style="margin-top:.6rem;max-height:50vh;overflow:auto"></div>');
+    filtrarAgregar(cid); $('#q').focus();
+  });
+}
+function filtrarAgregar(cid) {
+  var q = $('#q').value.toLowerCase();
+  $('#res').innerHTML = alumnasCache.filter(function (a) { return a.estado !== 'inactiva' && (a.nombre.toLowerCase().indexOf(q) >= 0 || String(a.rut).indexOf(q) >= 0); }).slice(0, 30).map(function (a) {
+    return '<div class="persona">' + av(a.nombre, a.foto) + '<div class="datos"><div class="nom">' + esc(a.nombre) + '</div><div class="mini">Saldo ' + a.saldo + '</div></div><button class="btn peq" onclick="api(\'reservarPor\',{alumna_id:\'' + a.id + '\',clase_id:\'' + cid + '\'}).then(function(r){cerrarModal();toast(r.sin_plan?\'Agregada (queda sin plan)\':\'Agregada\');VISTAS.dia()})">Agregar</button></div>';
+  }).join('') || '<p class="vacio">Sin resultados</p>';
+  Aura.pintarFotos($('#res'), token);
+}
+
+/* ----- Horario para Instagram ----- */
+function abrirIG() {
+  semanaSel = semanaSel || Aura.util.sumarDias(fecha, 1 - ((dObj(fecha).getUTCDay() + 6) % 7 + 1));
+  modal('<h3>Horario para Instagram</h3><p class="sub">Imagen lista para publicar en el feed o en historias.</p>' +
+    '<div class="acciones" style="margin:0 0 .8rem"><button class="btn claro peq" onclick="semanaSel=Aura.util.sumarDias(semanaSel,-7);dibujarIG()">‹ Semana anterior</button><button class="btn claro peq" onclick="semanaSel=Aura.util.sumarDias(semanaSel,7);dibujarIG()">Semana siguiente ›</button></div>' +
+    '<div class="fila2"><select class="entrada" id="ig-fmt" onchange="dibujarIG()"><option value="feed">Feed 4:5</option><option value="story">Historia 9:16</option></select>' +
+    '<select class="entrada" id="ig-cup" onchange="dibujarIG()"><option value="si">Mostrar cupos libres</option><option value="no">Solo horarios</option></select></div>' +
+    '<canvas id="ig" class="oculto"></canvas><img id="prev-ig" style="margin-top:.8rem" alt="Vista previa">' +
+    '<div class="acciones"><button class="btn" onclick="descargarIG()">Descargar imagen</button><button class="btn claro" onclick="cerrarModal()">Cerrar</button></div>');
+  dibujarIG();
+}
+function dibujarIG() {
+  api('semana', { desde: semanaSel }).then(function (sem) {
+    var story = val('ig-fmt') === 'story', cup = val('ig-cup') === 'si';
+    var W = 1080, H = story ? 1920 : 1350, cv = $('#ig'), x = cv.getContext('2d');
+    cv.width = W; cv.height = H;
+    var serif = '"Cormorant Garamond", Georgia, serif', sans = '"Nunito Sans", Arial, sans-serif';
+    x.fillStyle = '#F5F1EE'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#EEE7F5'; x.beginPath(); x.arc(W - 120, 110, 260, 0, 7); x.fill();
+    x.beginPath(); x.arc(90, H - 60, 200, 0, 7); x.fill();
+    var y0 = story ? 210 : 120;
+    x.fillStyle = '#34302D'; x.textAlign = 'center';
+    x.font = '500 92px ' + serif; espaciado(x, 'AURA', W / 2, y0, 26);
+    x.font = '700 22px ' + sans; x.fillStyle = '#75696F'; espaciado(x, 'STUDIO PILATES', W / 2, y0 + 44, 9);
+    var dias = sem.filter(function (d) { return d.clases.length; });
+    var f1 = dObj(sem[0].fecha), f2 = dObj(sem[6].fecha);
+    x.fillStyle = '#6B4C8A'; x.font = 'italic 500 54px ' + serif;
+    x.fillText('Horario ' + f1.getUTCDate() + ' al ' + f2.getUTCDate() + ' de ' + MESES_L[f2.getUTCMonth()], W / 2, y0 + 125);
+    var top = y0 + 175, bottom = H - (story ? 260 : 150), cols = Math.min(3, dias.length || 1), filas = Math.ceil(dias.length / cols);
+    var gap = 22, cw = (W - 120 - gap * (cols - 1)) / cols, ch = (bottom - top - gap * (filas - 1)) / Math.max(1, filas);
+    dias.forEach(function (d, i) {
+      var cx = 60 + (i % cols) * (cw + gap), cy = top + Math.floor(i / cols) * (ch + gap);
+      x.fillStyle = '#FFFFFF'; redondear(x, cx, cy, cw, ch, 28); x.fill();
+      var fd = dObj(d.fecha);
+      x.fillStyle = '#6B4C8A'; x.textAlign = 'left'; x.font = '800 30px ' + sans;
+      x.fillText(mayus(DIAS_L[fd.getUTCDay()]) + ' ' + fd.getUTCDate(), cx + 26, cy + 50);
+      var lh = Math.min(story ? 88 : 54, (ch - 80) / Math.max(1, d.clases.length));
+      d.clases.forEach(function (k, j) {
+        var yy = cy + (story ? 112 : 98) + j * lh;
+        x.textAlign = 'left'; x.fillStyle = k.estado === 'feriado' ? '#B8AEB3' : '#34302D'; x.font = '600 ' + Math.min(story ? 50 : 40, lh * .78) + 'px ' + serif;
+        x.fillText(k.inicio, cx + 26, yy);
+        if (k.estado === 'feriado') { x.textAlign = 'right'; x.font = '700 20px ' + sans; x.fillStyle = '#B8AEB3'; x.fillText('Sin clase', cx + cw - 24, yy - 6); }
+        else if (cup) {
+          x.textAlign = 'right'; x.font = '800 ' + (story ? 23 : 20) + 'px ' + sans;
+          x.fillStyle = k.libres ? '#4F6A4A' : '#9B5867';
+          x.fillText(k.libres ? k.libres + (k.libres === 1 ? ' cupo' : ' cupos') : 'Completa', cx + cw - 24, yy - 6);
+        }
+      });
+    });
+    x.textAlign = 'center'; x.fillStyle = '#34302D'; x.font = '800 30px ' + sans;
+    x.fillText('Reserva en la app de Aura', W / 2, H - (story ? 170 : 82));
+    x.font = '600 24px ' + sans; x.fillStyle = '#75696F';
+    x.fillText('@' + (pub.instagram || '') + '  ·  WhatsApp +' + String(pub.whatsapp).replace(/^(\d{2})(\d)(\d{4})(\d{4})$/, '$1 $2 $3 $4'), W / 2, H - (story ? 128 : 44));
+    $('#prev-ig').src = cv.toDataURL('image/png');
+  });
+}
+function espaciado(x, t, cx, y, sp) { var w = 0, ws = []; for (var i = 0; i < t.length; i++) { ws.push(x.measureText(t[i]).width); w += ws[i]; } w += sp * (t.length - 1);
+  var a = x.textAlign; x.textAlign = 'left'; var px = cx - w / 2; for (i = 0; i < t.length; i++) { x.fillText(t[i], px, y); px += ws[i] + sp; } x.textAlign = a; }
+function redondear(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+function descargarIG() { $('#ig').toBlob(function (b) { descargar('aura-horario-' + semanaSel + '.png', b); }); }
+
+/* =================== ALUMNAS =================== */
+function cargarAlumnas() { return api('alumnas').then(function (l) { alumnasCache = l; return l; }); }
+VISTAS.alumnas = function () {
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Alumnas</h1><button class="btn peq" onclick="nuevaAlumna()">+ Nueva alumna</button></div><div class="buscar"><input class="entrada" id="qa" placeholder="Buscar por nombre, RUT o teléfono" oninput="pintarAlumnas()"></div><div id="tabla"><div class="cargando">Cargando…</div></div>';
+  cargarAlumnas().then(pintarAlumnas);
+};
+function pintarAlumnas() {
+  var q = (val('qa') || '').toLowerCase();
+  var l = alumnasCache.filter(function (a) { return (a.nombre + ' ' + a.rut + ' ' + a.telefono).toLowerCase().indexOf(q) >= 0; });
+  var activas = alumnasCache.filter(function (a) { return a.saldo > 0; }).length;
+  $('#tabla').innerHTML = '<p class="mini" style="margin:-.4rem 0 .8rem">' + alumnasCache.length + ' alumnas · ' + activas + ' con plan activo</p>' +
+    '<table class="tabla"><thead><tr><th>Nombre</th><th class="num">Saldo</th><th class="opc">Vence</th><th class="opc">Teléfono</th></tr></thead><tbody>' +
+    l.map(function (a) {
+      return '<tr class="fila" onclick="ficha(\'' + a.id + '\')"><td><div class="quien">' + av(a.nombre, a.foto, 'm') + '<span><b>' + esc(a.nombre) + '</b>' + (a.estado === 'inactiva' ? ' <span class="chip gris">inactiva</span>' : '') +
+        (a.deudas ? ' <span class="chip alerta">debe ' + a.deudas + '</span>' : '') + '</span></div></td><td class="num">' + a.saldo + '</td><td class="opc">' + fCorta(a.vence) + '</td><td class="opc">' + esc(a.telefono) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  Aura.pintarFotos($('#tabla'), token);
+}
+function nuevaAlumna() {
+  modal('<h3>Nueva alumna</h3><p class="sub">Entra a la app con su RUT o correo y el PIN que le pongas. Después lo puede cambiar.</p>' +
+    '<label class="campo"><span>Nombre y apellido</span><input class="entrada" id="na-n"></label>' +
+    '<div class="fila2"><label class="campo"><span>RUT</span><input class="entrada" id="na-r" placeholder="12.345.678-9"></label><label class="campo"><span>Teléfono</span><input class="entrada" id="na-t" inputmode="tel"></label></div>' +
+    '<label class="campo"><span>Correo</span><input class="entrada" id="na-c" type="email"></label>' +
+    '<div class="fila2"><label class="campo"><span>Cumpleaños (DD-MM)</span><input class="entrada" id="na-f" placeholder="14-03"></label><label class="campo"><span>PIN inicial</span><input class="entrada" id="na-p" inputmode="numeric" maxlength="4" value="' + String(Math.floor(1000 + Math.random() * 9000)) + '"></label></div>' +
+    '<label class="campo"><span>Salud (lesiones, embarazo…)</span><textarea class="entrada" id="na-s"></textarea></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="crearAlumna()">Crear alumna</button></div>');
+}
+function crearAlumna() {
+  var d = { nombre: val('na-n'), rut: val('na-r'), telefono: val('na-t'), correo: val('na-c'), fecha_nacimiento: val('na-f'), pin: val('na-p'), obs_salud: val('na-s') };
+  api('crearAlumna', d).then(function (r) {
+    var link = location.href.replace(/panel\.html.*$/, '');
+    modal('<h3>Alumna creada</h3><p class="sub">Mándale sus datos de ingreso:</p>' +
+      '<a class="btn ws bloque" target="_blank" href="' + ws(d.telefono, 'Hola ' + d.nombre.split(' ')[0] + '! Ya tienes tu cuenta en la app de Aura 💜\nEntra aquí: ' + link + '\nUsuario: ' + (d.rut || d.correo) + '\nPIN: ' + d.pin + '\nPuedes cambiar el PIN en tu perfil.') + '">Enviar por WhatsApp</a>' +
+      '<button class="btn claro bloque" style="margin-top:.6rem" onclick="ficha(\'' + r.id + '\')">Ver ficha y cargar plan</button>');
+    if (val('qa') !== undefined) cargarAlumnas().then(function () { if ($('#tabla')) pintarAlumnas(); });
+  });
+}
+function ficha(id) {
+  api('ficha', { id: id }).then(function (f) {
+    var a = f.alumna, EST = { 'asistió': 'Asistió', 'faltó': 'Faltó', 'tardía': 'Canceló tarde', 'reservada': 'Reservada', 'cancelada': 'Cancelada' };
+    var h = '<div style="display:flex;gap:1rem;align-items:center;margin-bottom:.8rem"><label class="foto-sub" title="Cambiar foto">' + av(a.nombre, a.foto, 'g') +
+      '<span class="lapiz">✎</span><input type="file" accept="image/*" onchange="subirFoto(this,{alumna_id:\'' + a.id + '\'},\'' + a.id + '\')"></label>' +
+      '<div><h3 style="margin:0">' + esc(a.nombre) + '</h3><p class="sub" style="margin:.2rem 0 0">Desde ' + fCorta(a.alta) + (a.rut ? ' · ' + esc(a.rut) : '') + '</p></div></div>' +
+      '<div class="acciones" style="margin:0 0 .8rem"><a class="btn ws peq" target="_blank" href="' + ws(a.telefono, 'Hola ' + a.nombre.split(' ')[0] + ', ') + '">WhatsApp</a>' +
+      (a.correo ? '<a class="btn claro peq" href="mailto:' + esc(a.correo) + '">Correo</a>' : '') + '</div>' +
+      '<div class="dato"><span>Saldo</span><b>' + f.saldo + ' clases</b></div>' + (f.deudas ? '<div class="dato"><span>Clases sin plan</span><b style="color:var(--alerta)">' + f.deudas + '</b></div>' : '') +
+      '<div class="dato"><span>Teléfono</span><b>' + esc(a.telefono) + '</b></div><div class="dato"><span>Correo</span><b>' + esc(a.correo || '—') + '</b></div>' +
+      '<div class="dato"><span>Cumpleaños</span><b>' + (a.fecha_nacimiento ? esc(a.fecha_nacimiento.split('-')[0] + ' de ' + MESES_L[+a.fecha_nacimiento.split('-')[1] - 1]) : '—') + '</b></div>';
+    if (a.obs_salud) h += '<div class="bloque-f"><h4>Salud</h4><div class="salud">' + esc(a.obs_salud) + '</div></div>';
+    h += '<div class="bloque-f"><h4>Cargar plan</h4><div class="fila2"><select class="entrada" id="cp-plan" onchange="$(\'#cp-monto\').value=this.selectedOptions[0].dataset.p">' +
+      f.catalogo.map(function (p) { return '<option value="' + p.id + '" data-p="' + p.precio + '">' + esc(p.nombre) + ' · ' + plata(p.precio) + '</option>'; }).join('') + '</select>' +
+      '<select class="entrada" id="cp-medio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option></select></div>' +
+      '<div class="fila2" style="margin-top:.6rem"><input class="entrada" id="cp-monto" inputmode="numeric" value="' + (f.catalogo[0] ? f.catalogo[0].precio : '') + '" placeholder="Monto">' +
+      '<button class="btn" onclick="cargarPlan(\'' + a.id + '\')">Activar plan</button></div></div>';
+    h += '<div class="bloque-f"><h4>Planes</h4>' + (f.planes.length ? f.planes.slice().reverse().map(function (p) {
+      return '<div class="dato"><span>' + esc(p.nombre) + '<br><small>' + fCorta(p.inicio) + ' → ' + (p.vence ? fCorta(p.vence) : 'sin venc.') + '</small></span><b>' + (p.vigente ? p.libres + ' de ' + p.total : (p.vencido ? 'Vencido' : 'Usado')) + '</b></div>';
+    }).join('') : '<p class="mini">Sin planes todavía.</p>') + '</div>';
+    h += '<div class="bloque-f"><h4>Notas internas</h4><textarea class="entrada" id="notas">' + esc(a.notas) + '</textarea><button class="btn claro peq" style="margin-top:.5rem" onclick="api(\'editarAlumna\',{id:\'' + a.id + '\',notas:val(\'notas\')}).then(function(){toast(\'Guardado\')})">Guardar nota</button></div>';
+    h += '<div class="bloque-f"><h4>Últimas clases</h4>' + (f.reservas.length ? f.reservas.slice(0, 10).map(function (r) {
+      var p = r.clase_id.split('T'); return '<div class="dato"><span>' + fCorta(p[0]) + ' · ' + p[1] + '</span><b>' + (EST[r.estado] || r.estado) + (r.sin_plan && r.estado !== 'cancelada' ? ' · sin plan' : '') + '</b></div>';
+    }).join('') : '<p class="mini">Todavía no reserva.</p>') + '</div>';
+    if (f.pagos) h += '<div class="bloque-f"><h4>Pagos</h4>' + (f.pagos.length ? f.pagos.slice().reverse().map(function (p) {
+      return '<div class="dato"><span>' + fCorta(p.fecha) + ' · ' + esc(p.tipo === 'producto' ? p.nota : 'Plan') + ' · ' + esc(p.medio) + '</span><b>' + plata(p.monto) + '</b></div>'; }).join('') : '<p class="mini">Sin pagos.</p>') + '</div>';
+    if (rol === 'dueña') h += '<div class="bloque-f"><h4>PIN de ingreso</h4><div class="fila2"><input class="entrada" id="np" inputmode="numeric" maxlength="4" placeholder="PIN nuevo (4 números)"><button class="btn claro" onclick="api(\'nuevoPin\',{id:\'' + a.id + '\',pin:val(\'np\')}).then(function(){toast(\'PIN actualizado\')})">Cambiar PIN</button></div></div>';
+    h += '<div class="acciones" style="margin-top:1.2rem"><button class="btn borde peq" onclick="api(\'editarAlumna\',{id:\'' + a.id + '\',estado:\'' + (a.estado === 'inactiva' ? 'activa' : 'inactiva') + '\'}).then(function(){cerrarModal();toast(\'Listo\');VISTAS.alumnas()})">' + (a.estado === 'inactiva' ? 'Reactivar alumna' : 'Desactivar alumna') + '</button><button class="btn claro peq" onclick="cerrarModal()">Cerrar</button></div>';
+    modal(h);
+  });
+}
+function subirFoto(input, args, refrescar) {
+  var f = input.files[0]; if (!f) return;
+  Aura.achicarFoto(f, args.producto_id ? 320 : 200).then(function (data) {
+    args.data = data; return api('subirFoto', args);
+  }).then(function () {
+    sessionStorage.removeItem('aura_fotos'); toast('Foto guardada');
+    if (args.producto_id) VISTAS.tienda(); else ficha(refrescar);
+  }).catch(function (e) { if (e && e.mensaje) toast(e.mensaje); });
+}
+function cargarPlan(id) {
+  api('cargarPlan', { alumna_id: id, plan_id: val('cp-plan'), medio: val('cp-medio'), monto: val('cp-monto') }).then(function (r) {
+    toast('Plan activado · saldo ' + r.saldo + (r.deudas_pagadas ? ' · ' + r.deudas_pagadas + ' clase(s) pendientes pagadas' : ''));
+    ficha(id);
+  });
+}
+
+/* =================== REPORTES =================== */
+VISTAS.reportes = function () {
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><button class="redondo no-print" onclick="mesSel=sumaMes(mesSel,-1);VISTAS.reportes()">‹</button><h1>Reporte de ' + nombreMes(mesSel).toLowerCase() + '</h1>' +
+    '<button class="redondo no-print" onclick="mesSel=sumaMes(mesSel,1);VISTAS.reportes()">›</button></div><div id="rep"><div class="cargando">Calculando…</div></div>';
+  Promise.all([api('reporte', { mes: mesSel }), api('gastos', { mes: mesSel })]).then(function (r) {
+    var d = r[0], g = r[1];
+    var h = '<div class="barra-acc no-print"><button class="btn claro peq" onclick="exportar(\'resumen\')">Descargar resumen (Excel)</button><button class="btn claro peq" onclick="exportar(\'detalle\')">Descargar pagos, gastos y reservas</button>' +
+      '<button class="btn claro peq" onclick="exportar(\'alumnas\')">Descargar alumnas</button><button class="btn claro peq" onclick="guardarDrive()">Guardar en Drive</button><button class="btn borde peq" onclick="window.print()">Imprimir / PDF</button></div>';
+    h += '<div class="resumen">' + kpi(plata(d.ventas), 'ventas') + kpi(plata(d.gastos), 'gastos') + kpi(plata(d.utilidad), 'utilidad', d.utilidad < 0) + kpi(d.margen + '%', 'margen', d.margen < 0) +
+      kpi(d.punto_equilibrio_planes, 'planes para cubrir gastos') + kpi(d.ocupacion + '%', 'ocupación') + '</div>';
+    h += '<div class="resumen">' + kpi(d.clases_dictadas, 'clases dictadas') + kpi(plata(d.ingreso_por_clase), 'ingreso por clase') + kpi(plata(d.costo_por_clase), 'costo por clase') +
+      kpi(plata(d.ticket_promedio), 'ticket promedio') + kpi(d.alumnas_activas, 'alumnas activas') + kpi(d.renovacion === null ? '—' : d.renovacion + '%', 'renovación') + '</div>';
+    h += '<div class="dos"><div class="tarjeta"><h2 class="sec" style="margin-top:0">Ventas y gastos · 6 meses</h2>' + grafico(d.serie) +
+      '<div class="leyenda"><span><i style="background:#6B4C8A"></i>Ventas</span><span><i style="background:#D9B8C0"></i>Gastos</span></div></div>' +
+      '<div class="tarjeta"><h2 class="sec" style="margin-top:0">Detalle del mes</h2>' +
+      fila('Ventas de planes', plata(d.ventas_planes) + ' · ' + d.planes_vendidos) + fila('Ventas de tienda', plata(d.ventas_productos)) +
+      fila('Asistencias / faltas', d.asistencias + ' / ' + d.faltas) + fila('Cancelaciones tardías', d.tardias) + fila('Alumnas nuevas', d.alumnas_nuevas) +
+      fila('Por cobrar (clases sin plan)', d.por_cobrar_clases + ' · ' + plata(d.por_cobrar_monto)) + fila('Clases vencidas sin usar', d.vencidas_sin_usar) + '</div></div>';
+    h += '<div class="dos"><div><h2 class="sec">Ventas por plan</h2>' + tabla(['Plan', 'Cantidad', 'Monto'], d.por_plan.map(function (p) { return [esc(p.nombre), p.cantidad, plata(p.monto)]; })) +
+      (d.por_producto.length ? '<h2 class="sec">Ventas de tienda</h2>' + tabla(['Producto', 'Monto'], d.por_producto.map(function (p) { return [esc(p.nombre), plata(p.monto)]; })) : '') + '</div>' +
+      '<div><h2 class="sec">Gastos del mes</h2>' + tabla(['Fecha', 'Categoría', 'Detalle', 'Monto', ''], g.map(function (x) {
+        return [fCorta(x.fecha), esc(x.categoria) + (x.tipo === 'variable' ? ' <span class="chip gris">variable</span>' : ''), esc(x.detalle), plata(x.monto),
+          '<button class="link no-print" onclick="borrarGasto(\'' + x.id + '\',\'' + x.fecha + '\',' + x.monto + ')">Quitar</button>'];
+      })) + '<div class="tarjeta no-print" style="margin-top:.8rem"><div class="fila2"><input class="entrada" id="g-f" type="date" value="' + (mesSel === hoy.slice(0, 7) ? hoy : mesSel + '-01') + '">' +
+      '<select class="entrada" id="g-c"><option>Arriendo</option><option>Pago profesoras</option><option>Servicios</option><option>Insumos</option><option>Publicidad</option><option>Mantención</option><option>Otros</option></select></div>' +
+      '<div class="fila2" style="margin-top:.6rem"><input class="entrada" id="g-d" placeholder="Detalle"><input class="entrada" id="g-m" inputmode="numeric" placeholder="Monto"></div>' +
+      '<div class="fila2" style="margin-top:.6rem"><select class="entrada" id="g-t"><option value="fijo">Gasto fijo</option><option value="variable">Gasto variable</option></select><button class="btn" onclick="guardarGasto()">Agregar gasto</button></div></div></div></div>';
+    $('#rep').innerHTML = h; window._rep = d;
+  });
+};
+function kpi(n, t, neg) { return '<div class="tarjeta"><div class="n' + (neg ? ' neg' : '') + '">' + n + '</div><div class="t">' + t + '</div></div>'; }
+function fila(a, b) { return '<div class="dato"><span>' + a + '</span><b>' + b + '</b></div>'; }
+function tabla(cab, filas) {
+  if (!filas.length) return '<div class="tarjeta vacio">Sin datos este mes.</div>';
+  return '<table class="tabla"><thead><tr>' + cab.map(function (c, i) { return '<th' + (i === cab.length - 1 || /Monto|Cantidad/.test(c) ? ' class="num"' : '') + '>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    filas.map(function (f) { return '<tr>' + f.map(function (c, i) { return '<td' + (i === f.length - 1 || /Monto|Cantidad/.test(cab[i]) ? ' class="num"' : '') + '>' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+}
+function grafico(serie) {
+  var W = 460, H = 200, max = Math.max.apply(null, serie.map(function (s) { return Math.max(s.ventas, s.gastos); }).concat([1]));
+  var bw = W / serie.length, out = '<svg class="graf" viewBox="0 0 ' + W + ' ' + (H + 34) + '" role="img" aria-label="Ventas y gastos de los últimos 6 meses">';
+  [0, .5, 1].forEach(function (t) { var y = H - t * (H - 14); out += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" stroke="#E4DCE0" stroke-width="1"/>'; });
+  serie.forEach(function (s, i) {
+    var x0 = i * bw + bw * .18, w = bw * .3, hv = s.ventas / max * (H - 14), hg = s.gastos / max * (H - 14);
+    out += '<rect x="' + x0 + '" y="' + (H - hv) + '" width="' + w + '" height="' + hv + '" rx="4" fill="#6B4C8A"><title>Ventas ' + plata(s.ventas) + '</title></rect>';
+    out += '<rect x="' + (x0 + w + 3) + '" y="' + (H - hg) + '" width="' + w + '" height="' + hg + '" rx="4" fill="#D9B8C0"><title>Gastos ' + plata(s.gastos) + '</title></rect>';
+    out += '<text x="' + (i * bw + bw / 2) + '" y="' + (H + 22) + '" text-anchor="middle" font-size="13" fill="#75696F" font-family="Nunito Sans, sans-serif">' + MESES[+s.mes.split('-')[1] - 1] + '</text>';
+  });
+  out += '<text x="2" y="12" font-size="11" fill="#75696F" font-family="Nunito Sans, sans-serif">' + plata(max) + '</text>';
+  return out + '</svg>';
+}
+function guardarGasto() {
+  api('guardarGasto', { fecha: val('g-f'), categoria: val('g-c'), detalle: val('g-d'), monto: val('g-m').replace(/\D/g, ''), tipo: val('g-t') }).then(function () { toast('Gasto agregado'); VISTAS.reportes(); });
+}
+function borrarGasto(id, f, m) { if (confirm('¿Quitar este gasto?')) api('guardarGasto', { id: id, fecha: f, monto: m, activo: 'no' }).then(VISTAS.reportes); }
+function exportar(tipo) {
+  if (tipo === 'resumen') {
+    return descargar('aura-reporte-' + window._rep.mes + '.csv', csv(filasResumen()), 'text/csv');
+  }
+  api('exportar', { mes: mesSel }).then(function (x) {
+    if (tipo === 'alumnas') return descargar('aura-alumnas.csv', csv([['Nombre', 'RUT', 'Correo', 'Teléfono', 'Alta', 'Estado', 'Saldo']].concat(x.alumnas)), 'text/csv');
+    descargar('aura-detalle-' + mesSel + '.csv', csv(filasDetalle(x)), 'text/csv');
+  });
+}
+function filasDetalle(x) {
+  return [['PAGOS ' + nombreMes(mesSel)], ['Fecha', 'Alumna', 'Tipo', 'Plan / producto', 'Cantidad', 'Medio', 'Monto']].concat(x.pagos)
+    .concat([[], ['GASTOS'], ['Fecha', 'Categoría', 'Detalle', 'Tipo', 'Monto']]).concat(x.gastos)
+    .concat([[], ['RESERVAS'], ['Fecha', 'Hora', 'Alumna', 'Estado', 'Pago']]).concat(x.reservas);
+}
+function guardarDrive() {
+  toast('Guardando en Drive…');
+  api('exportar', { mes: mesSel }).then(function (x) {
+    var filas = filasResumen().concat([[], []]).concat(filasDetalle(x));
+    return api('guardarEnDrive', { nombre: 'Reporte Aura ' + nombreMes(mesSel), filas: filas });
+  }).then(function (r) {
+    modal('<h3>Reporte guardado</h3><p class="sub">Quedó en Drive › Aura Studio Pilates › Reportes.</p><a class="btn bloque" target="_blank" href="' + esc(r.url) + '">Abrir en Google Sheets</a>');
+  });
+}
+function filasResumen() {
+    var d = window._rep, f = [['Aura Studio Pilates · Reporte ' + nombreMes(d.mes)], [], ['Indicador', 'Valor'],
+      ['Ventas', d.ventas], ['Ventas de planes', d.ventas_planes], ['Ventas de tienda', d.ventas_productos], ['Planes vendidos', d.planes_vendidos],
+      ['Gastos', d.gastos], ['Gastos fijos', d.gastos_fijos], ['Utilidad', d.utilidad], ['Margen %', d.margen], ['Planes para cubrir gastos', d.punto_equilibrio_planes],
+      ['Ticket promedio', d.ticket_promedio], ['Clases dictadas', d.clases_dictadas], ['Ocupación %', d.ocupacion], ['Ingreso por clase', d.ingreso_por_clase],
+      ['Costo por clase', d.costo_por_clase], ['Asistencias', d.asistencias], ['Faltas', d.faltas], ['Cancelaciones tardías', d.tardias],
+      ['Alumnas activas', d.alumnas_activas], ['Alumnas nuevas', d.alumnas_nuevas], ['Renovación %', d.renovacion === null ? '' : d.renovacion],
+      ['Clases por cobrar', d.por_cobrar_clases], ['Monto por cobrar (estimado)', d.por_cobrar_monto], ['Clases vencidas sin usar', d.vencidas_sin_usar], [],
+      ['Ventas por plan', 'Cantidad', 'Monto']].concat(d.por_plan.map(function (p) { return [p.nombre, p.cantidad, p.monto]; }))
+      .concat([[], ['Gastos por categoría', 'Monto']]).concat(d.por_categoria.map(function (c) { return [c.categoria, c.monto]; }))
+      .concat([[], ['Mes', 'Ventas', 'Gastos']]).concat(d.serie.map(function (s) { return [s.mes, s.ventas, s.gastos]; }));
+    return f;
+}
+
+/* =================== TIENDA Y EVENTOS =================== */
+VISTAS.tienda = function () {
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Tienda y eventos</h1></div><div id="ti"><div class="cargando">Cargando…</div></div>';
+  Promise.all([api('productos'), api('eventos')]).then(function (r) {
+    var prods = r[0], evs = r[1]; window._prods = prods; window._evs = evs;
+    var h = '<div class="barra-acc">' + (rol === 'dueña' ? '<button class="btn peq" onclick="editarProducto()">+ Producto</button>' : '') + '<button class="btn claro peq" onclick="editarEvento()">+ Evento</button></div>';
+    h += '<h2 class="sec">Productos</h2><div class="grilla">' + (prods.length ? prods.map(function (p) {
+      return '<div class="tarjeta"><div class="prod"><label class="foto-sub"><span class="img" data-foto="' + esc(p.foto) + '">' + iniciales(p.nombre) + '</span>' +
+        (rol === 'dueña' ? '<input type="file" accept="image/*" onchange="subirFoto(this,{producto_id:\'' + p.id + '\'})">' : '') + '</label>' +
+        '<div style="flex:1;min-width:0"><b>' + esc(p.nombre) + '</b>' + (p.activo ? '' : ' <span class="chip gris">oculto</span>') + '<div class="mini">' + esc(p.descripcion) + '</div>' +
+        '<div style="margin-top:.2rem"><b>' + plata(p.precio) + '</b> <span class="mini">· ' + (p.stock === null ? 'sin control de stock' : 'stock ' + p.stock) + '</span></div></div></div>' +
+        '<div class="acciones"><button class="btn peq" onclick="vender(\'' + p.id + '\')">Registrar venta</button>' + (rol === 'dueña' ? '<button class="btn claro peq" onclick="editarProducto(\'' + p.id + '\')">Editar</button>' : '') + '</div></div>';
+    }).join('') : '<div class="tarjeta vacio">Todavía no hay productos. Agrega calcetines, coles o lo que vendas.</div>') + '</div>';
+    h += '<h2 class="sec">Eventos</h2>' + (evs.length ? tabla(['Fecha', 'Evento', 'Precio', ''], evs.map(function (e) {
+      return [fCorta(e.fecha) + (e.hora ? ' · ' + e.hora : ''), '<b>' + esc(e.titulo) + '</b>' + (e.activo ? '' : ' <span class="chip gris">oculto</span>') + (e.fecha < hoy ? ' <span class="chip gris">pasado</span>' : '') + '<div class="mini">' + esc(e.descripcion) + '</div>',
+        e.precio === null ? 'Gratis' : plata(e.precio), '<button class="link" onclick="editarEvento(\'' + e.id + '\')">Editar</button>'];
+    })) : '<div class="tarjeta vacio">Sin eventos. Agrega talleres, clases especiales o salidas.</div>');
+    $('#ti').innerHTML = h; Aura.pintarFotos($('#ti'), token);
+  });
+};
+function editarProducto(id) {
+  var p = (window._prods || []).filter(function (x) { return x.id === id; })[0] || { nombre: '', descripcion: '', precio: '', stock: null, activo: true };
+  modal('<h3>' + (id ? 'Editar producto' : 'Nuevo producto') + '</h3><label class="campo"><span>Nombre</span><input class="entrada" id="p-n" value="' + esc(p.nombre) + '" placeholder="Calcetines antideslizantes"></label>' +
+    '<label class="campo"><span>Descripción</span><input class="entrada" id="p-d" value="' + esc(p.descripcion) + '" placeholder="Talla única, colores…"></label>' +
+    '<div class="fila2"><label class="campo"><span>Precio</span><input class="entrada" id="p-p" inputmode="numeric" value="' + esc(p.precio) + '"></label><label class="campo"><span>Stock (vacío = sin control)</span><input class="entrada" id="p-s" inputmode="numeric" value="' + (p.stock === null ? '' : p.stock) + '"></label></div>' +
+    '<label class="check"><input type="checkbox" id="p-a"' + (p.activo ? ' checked' : '') + '><span>Mostrar en la tienda de la app</span></label>' +
+    '<p class="mini">La foto se sube tocando la imagen del producto en la lista.</p><div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="guardarProducto(\'' + (id || '') + '\')">Guardar</button></div>');
+}
+function guardarProducto(id) {
+  api('guardarProducto', { id: id || undefined, nombre: val('p-n'), descripcion: val('p-d'), precio: val('p-p').replace(/\D/g, ''), stock: val('p-s').replace(/\D/g, ''), activo: $('#p-a').checked ? 'si' : 'no' })
+    .then(function () { cerrarModal(); toast('Producto guardado'); VISTAS.tienda(); });
+}
+function vender(id) {
+  var p = window._prods.filter(function (x) { return x.id === id; })[0];
+  cargarAlumnas().then(function (l) {
+    modal('<h3>Venta · ' + esc(p.nombre) + '</h3><p class="sub">' + plata(p.precio) + ' c/u</p>' +
+      '<label class="campo"><span>Alumna (opcional)</span><select class="entrada" id="v-a"><option value="">Sin alumna / otra persona</option>' + l.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nombre) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="fila2"><label class="campo"><span>Cantidad</span><input class="entrada" id="v-c" inputmode="numeric" value="1" oninput="$(\'#v-m\').value=(+this.value||1)*' + p.precio + '"></label><label class="campo"><span>Total</span><input class="entrada" id="v-m" inputmode="numeric" value="' + p.precio + '"></label></div>' +
+      '<label class="campo"><span>Medio de pago</span><select class="entrada" id="v-p"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option></select></label>' +
+      '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="api(\'venderProducto\',{producto_id:\'' + id + '\',alumna_id:val(\'v-a\'),cantidad:val(\'v-c\'),monto:val(\'v-m\'),medio:val(\'v-p\')}).then(function(){cerrarModal();toast(\'Venta registrada\');VISTAS.tienda()})">Registrar</button></div>');
+  });
+}
+function editarEvento(id) {
+  var e = (window._evs || []).filter(function (x) { return x.id === id; })[0] || { titulo: '', fecha: hoy, hora: '', descripcion: '', lugar: 'Aura Studio', precio: null, cupos: null, activo: true };
+  modal('<h3>' + (id ? 'Editar evento' : 'Nuevo evento') + '</h3><label class="campo"><span>Título</span><input class="entrada" id="e-t" value="' + esc(e.titulo) + '" placeholder="Taller de respiración"></label>' +
+    '<div class="fila2"><label class="campo"><span>Fecha</span><input class="entrada" id="e-f" type="date" value="' + esc(e.fecha) + '"></label><label class="campo"><span>Hora</span><input class="entrada" id="e-h" type="time" value="' + esc(e.hora) + '"></label></div>' +
+    '<label class="campo"><span>Descripción</span><textarea class="entrada" id="e-d">' + esc(e.descripcion) + '</textarea></label>' +
+    '<label class="campo"><span>Lugar</span><input class="entrada" id="e-l" value="' + esc(e.lugar) + '"></label>' +
+    '<div class="fila2"><label class="campo"><span>Precio (vacío = gratis)</span><input class="entrada" id="e-p" inputmode="numeric" value="' + (e.precio === null ? '' : e.precio) + '"></label><label class="campo"><span>Cupos (opcional)</span><input class="entrada" id="e-c" inputmode="numeric" value="' + (e.cupos === null ? '' : e.cupos) + '"></label></div>' +
+    '<label class="check"><input type="checkbox" id="e-a"' + (e.activo ? ' checked' : '') + '><span>Mostrar en la app</span></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="guardarEvento(\'' + (id || '') + '\')">Guardar</button></div>');
+}
+function guardarEvento(id) {
+  api('guardarEvento', { id: id || undefined, titulo: val('e-t'), fecha: val('e-f'), hora: val('e-h'), descripcion: val('e-d'), lugar: val('e-l'),
+    precio: val('e-p').replace(/\D/g, ''), cupos: val('e-c').replace(/\D/g, ''), activo: $('#e-a').checked ? 'si' : 'no' }).then(function () { cerrarModal(); toast('Evento guardado'); VISTAS.tienda(); });
+}
+
+/* =================== AJUSTES =================== */
+VISTAS.ajustes = function () {
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Ajustes</h1></div><div id="aj"><div class="cargando">Cargando…</div></div>';
+  Promise.all([api('ajustes'), api('horario')]).then(function (r) {
+    var c = r[0], hor = r[1];
+    var h = '<div class="dos"><div class="tarjeta"><h2 class="sec" style="margin-top:0">Datos del estudio</h2>' +
+      campo('WhatsApp del estudio', 'whatsapp', c.whatsapp, '56947483746') + campo('Instagram (sin @)', 'instagram', c.instagram) +
+      '<label class="campo"><span>Datos de transferencia</span><textarea class="entrada aj" data-k="transferencia" placeholder="Nombre, RUT, banco, tipo y número de cuenta, correo">' + esc(c.transferencia) + '</textarea></label>' +
+      campo('WhatsApp de soporte técnico', 'soporte', c.soporte) + '</div>' +
+      '<div class="tarjeta"><h2 class="sec" style="margin-top:0">Reglas de reserva</h2>' +
+      '<label class="campo"><span>Cierre de reservas</span><select class="entrada aj" data-k="cierre_modo"><option value="dia_anterior"' + (c.cierre_modo === 'dia_anterior' ? ' selected' : '') + '>Hasta una hora del día anterior</option><option value="horas"' + (c.cierre_modo === 'horas' ? ' selected' : '') + '>Hasta X horas antes de la clase</option></select></label>' +
+      '<div class="fila2">' + campo('Hora de cierre (día anterior)', 'cierre_hora', c.cierre_hora, '21:00') + campo('o horas antes', 'horas_cierre_reserva', c.horas_cierre_reserva) + '</div>' +
+      '<div class="fila2">' + campo('Cancelar sin costo hasta (horas antes)', 'horas_cancelacion', c.horas_cancelacion) + campo('Días que se ven hacia adelante', 'dias_adelanto', c.dias_adelanto) + '</div>' +
+      '<div class="fila2">' + campo('Cupos por clase (nuevas)', 'cupos_por_clase', c.cupos_por_clase) +
+      '<label class="campo"><span>Sin clases disponibles</span><select class="entrada aj" data-k="permitir_sin_saldo"><option value="si"' + (c.permitir_sin_saldo === 'si' ? ' selected' : '') + '>Reserva y queda debiendo</option><option value="no"' + (c.permitir_sin_saldo === 'no' ? ' selected' : '') + '>No puede reservar</option></select></label></div></div></div>';
+    h += '<div class="tarjeta" style="margin-top:1rem"><h2 class="sec" style="margin-top:0">Políticas de Aura</h2><p class="mini" style="margin-top:-.2rem">Las alumnas las ven en la app y las aceptan al registrarse. Una regla por línea.</p>' +
+      '<textarea class="entrada aj" data-k="politicas" style="min-height:180px">' + esc(c.politicas) + '</textarea></div>';
+    h += '<div class="acciones"><button class="btn" onclick="guardarAjustes()">Guardar ajustes</button></div>';
+    h += '<h2 class="sec">Google Drive</h2><div class="tarjeta" id="aj-drive"><div class="cargando">Revisando Drive…</div></div>';
+    h += '<h2 class="sec">Horario semanal</h2><div class="tarjeta">';
+    for (var d = 1; d <= 7; d++) {
+      var del = hor.filter(function (x) { return x.dia_semana === d; });
+      if (!del.length && d === 7) continue;
+      h += '<div class="hor-dia"><b>' + DIAS_SEM[d] + '</b>' + (del.length ? del.map(function (x) {
+        return '<span class="pill">' + x.inicio + ' <span class="mini">(' + x.cupos + ')</span><button title="Quitar" onclick="quitarHorario(\'' + x.id + '\',' + x.dia_semana + ',\'' + x.inicio + '\')">×</button></span>';
+      }).join('') : '<span class="mini">Sin clases</span>') + '</div>';
+    }
+    h += '<div class="fila2" style="margin-top:.6rem"><select class="entrada" id="h-d">' + [1, 2, 3, 4, 5, 6, 7].map(function (d) { return '<option value="' + d + '">' + DIAS_SEM[d] + '</option>'; }).join('') + '</select>' +
+      '<input class="entrada" id="h-h" type="time" value="18:10"></div><div class="fila2" style="margin-top:.6rem"><input class="entrada" id="h-c" inputmode="numeric" value="' + c.cupos_por_clase + '" placeholder="Cupos">' +
+      '<button class="btn" onclick="agregarHorario()">Agregar clase al horario</button></div><p class="mini">Los cambios rigen desde ya. Para un día puntual (feriado), usa "Suspender el día" en Clases.</p></div>';
+    h += '<h2 class="sec">Planes y precios</h2><div id="aj-planes"></div>';
+    $('#aj').innerHTML = h; pintarPlanes();
+    api('drive').then(function (d) {
+      $('#aj-drive').innerHTML = d.demo ? '<p class="mini">En la demo no hay Drive. Con el sistema conectado, aquí abres la carpeta del estudio, la planilla y los respaldos.</p>' :
+        '<p class="mini" style="margin-top:0">Todos los datos están en la carpeta <b>Aura Studio Pilates</b> de tu Drive. Cada domingo se guarda un respaldo automático.' +
+        (d.ultimo_respaldo ? ' Último respaldo: ' + esc(d.ultimo_respaldo) + '.' : '') + '</p><div class="acciones">' +
+        (d.carpeta ? '<a class="btn claro peq" target="_blank" href="' + esc(d.carpeta) + '">Abrir carpeta en Drive</a>' : '') +
+        (d.planilla ? '<a class="btn claro peq" target="_blank" href="' + esc(d.planilla) + '">Abrir planilla</a>' : '') +
+        '<button class="btn borde peq" onclick="this.disabled=true;api(\'respaldar\').then(function(){toast(\'Respaldo guardado en Drive\');VISTAS.ajustes()})">Hacer respaldo ahora</button></div>';
+    }).catch(function () { $('#aj-drive').innerHTML = '<p class="mini">No se pudo revisar Drive.</p>'; });
+  });
+};
+function campo(t, k, v, ph) { return '<label class="campo"><span>' + t + '</span><input class="entrada aj" data-k="' + k + '" value="' + esc(v) + '"' + (ph ? ' placeholder="' + ph + '"' : '') + '></label>'; }
+function guardarAjustes() {
+  var v = {}; document.querySelectorAll('.aj').forEach(function (e) { v[e.dataset.k] = e.value; });
+  api('guardarAjustes', { valores: v }).then(function () { toast('Ajustes guardados'); refrescarPub(); });
+}
+function agregarHorario() { api('guardarHorario', { dia_semana: val('h-d'), inicio: val('h-h'), cupos: val('h-c') }).then(function () { toast('Clase agregada'); VISTAS.ajustes(); }); }
+function quitarHorario(id, d, h) { if (confirm('¿Quitar la clase del ' + DIAS_SEM[d].toLowerCase() + ' a las ' + h + ' del horario?')) api('guardarHorario', { id: id, dia_semana: d, inicio: h, activo: 'no' }).then(VISTAS.ajustes); }
+function pintarPlanes() {
+  refrescarPub().then(function () {
+    $('#aj-planes').innerHTML = tabla(['Plan', 'Clases', 'Vigencia', 'Precio', ''], pub.planes.map(function (p) {
+      return [esc(p.nombre), p.clases, p.dias ? p.dias + ' días' : 'sin venc.', plata(p.precio), '<button class="link" onclick="editarPlan(\'' + p.id + '\')">Editar</button>'];
+    })) + '<div class="acciones"><button class="btn claro peq" onclick="editarPlan()">+ Plan nuevo</button></div>';
+  });
+}
+function editarPlan(id) {
+  var p = pub.planes.filter(function (x) { return x.id === id; })[0] || { nombre: '', clases: 4, dias: 30, precio: '', tope_semanal: 0 };
+  modal('<h3>' + (id ? 'Editar plan' : 'Plan nuevo') + '</h3><label class="campo"><span>Nombre</span><input class="entrada" id="pl-n" value="' + esc(p.nombre) + '"></label>' +
+    '<div class="fila2"><label class="campo"><span>Clases</span><input class="entrada" id="pl-c" inputmode="numeric" value="' + p.clases + '"></label><label class="campo"><span>Vigencia en días (0 = sin vencimiento)</span><input class="entrada" id="pl-d" inputmode="numeric" value="' + p.dias + '"></label></div>' +
+    '<label class="campo"><span>Precio</span><input class="entrada" id="pl-p" inputmode="numeric" value="' + p.precio + '"></label>' +
+    '<label class="check"><input type="checkbox" id="pl-a" checked><span>Disponible para vender</span></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="api(\'guardarPlan\',{id:\'' + (id || '') + '\'||undefined,nombre:val(\'pl-n\'),clases:val(\'pl-c\'),dias:val(\'pl-d\'),precio:val(\'pl-p\').replace(/\\D/g,\'\'),tope_semanal:' + (p.tope_semanal || 0) + ',activo:$(\'#pl-a\').checked?\'si\':\'no\'}).then(function(){cerrarModal();toast(\'Plan guardado\');pintarPlanes()})">Guardar</button></div>');
+}
+
+if (Aura.demo) $('#demo').classList.remove('oculto');
+if (token) empezar(); else ir('entrar');
+</script>
+</body>
+</html>
