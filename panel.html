@@ -95,6 +95,11 @@
   .soporte-flot { position: fixed; right: 16px; bottom: 16px; z-index: 30; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
+  .aviso { border-radius: 14px; padding: .65rem .85rem; font-size: .88rem; background: var(--lavanda); }
+  .pagos-caja { margin-bottom: 1.2rem; border: 2px solid #F0D9A8; background: #FFFBF2; }
+  .pagos-cab { margin-bottom: .5rem; } .pagos-cab h2 { font-family: var(--serif); font-size: 1.35rem; margin: 0 0 .2rem; }
+  .chip.pago { background: #FFF1D6; color: #8A6417; }
+  .comp-img { text-align: center; margin-bottom: .8rem; } .comp-img img { max-width: 100%; max-height: 52vh; border-radius: 12px; border: 1px solid #eee; }
   .cal-caja { padding: 1rem 1.1rem 1.1rem; }
   .cal-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: .7rem; }
   .cal-cab h2 { font-size: 1.6rem; }
@@ -228,17 +233,18 @@ function revisarNotif() {
     window._notif = r; var b = $('#notif-n');
     if (r.nuevas > 0) { b.textContent = r.nuevas > 9 ? '9+' : r.nuevas; b.classList.remove('oculto'); } else b.classList.add('oculto');
     if (!localStorage.getItem(NOTIF_K)) localStorage.setItem(NOTIF_K, r.ahora);
+    if (r.pendientes !== undefined && r.pendientes !== pagosVistos && $('#pagos-rev')) cargarPagos();
   }).catch(function () {});
 }
 function verNotif() {
   var r = window._notif, visto = localStorage.getItem(NOTIF_K) || '';
   var lista = r ? r.lista : [];
-  modal('<h3>Notificaciones</h3><p class="sub">Reservas, cancelaciones y registros de tus alumnas.</p><div style="max-height:60vh;overflow:auto">' +
+  modal('<h3>Notificaciones</h3><p class="sub">Reservas, cancelaciones, pagos y registros de tus alumnas.</p><div style="max-height:60vh;overflow:auto">' +
     (lista.length ? lista.map(function (n) {
       var f = String(n.fecha), nueva = f > visto;
       return '<div class="persona' + (nueva ? ' notif-nueva' : '') + '" onclick="ficha(\'' + n.alumna_id + '\')" style="cursor:pointer">' + av(n.nombre, n.foto) +
         '<div class="datos"><div><b>' + esc(n.nombre) + '</b> ' + esc(n.texto) + '</div><div class="mini">' + (f.slice(0, 10) === hoy ? 'Hoy' : fCorta(f.slice(0, 10))) + ' · ' + f.slice(11, 16) + '</div></div>' +
-        (n.accion === 'cancelar' ? '<span class="chip rosa">Canceló</span>' : n.accion === 'registro' ? '<span class="chip">Nueva</span>' : '<span class="chip salvia">Reserva</span>') + '</div>';
+        (n.accion === 'comprobante' ? '<span class="chip pago">Pago</span>' : n.accion === 'cancelar' ? '<span class="chip rosa">Canceló</span>' : n.accion === 'registro' ? '<span class="chip">Nueva</span>' : '<span class="chip salvia">Reserva</span>') + '</div>';
     }).join('') : '<p class="vacio">Todavía no hay movimientos.</p>') + '</div>');
   if (r) { localStorage.setItem(NOTIF_K, r.ahora); $('#notif-n').classList.add('oculto'); }
 }
@@ -263,7 +269,7 @@ function moverDia(n) { fecha = Aura.util.sumarDias(fecha, n); mesCal = fecha.sli
 function elegirFecha(f) { fecha = f; pintarCal(window._cal); cargarDia(); var d = $('#dia-cab'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 VISTAS.dia = function () {
   mesCal = mesCal || fecha.slice(0, 7);
-  $('#cuerpo').innerHTML =
+  $('#cuerpo').innerHTML = '<div id="pagos-rev"></div>' +
     '<div class="tarjeta cal-caja"><div class="cal-cab"><button class="redondo" onclick="mesCal=sumaMes(mesCal,-1);cargarCal()">‹</button>' +
     '<h2 id="cal-tit"></h2><button class="redondo" onclick="mesCal=sumaMes(mesCal,1);cargarCal()">›</button></div>' +
     '<div class="cal" id="cal"><div class="cargando" style="grid-column:1/-1">Cargando calendario…</div></div>' +
@@ -274,9 +280,58 @@ VISTAS.dia = function () {
     '<button class="btn borde peq" onclick="avisoTodas()">Enviar correo a todas</button></div><div id="dia-c"><div class="cargando">Cargando…</div></div>' +
     '<h2 class="sec" style="margin-top:2rem">Tus alumnas</h2><div class="lupa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>' +
     '<input class="entrada" id="qi" placeholder="Buscar alumna por nombre, RUT, correo o teléfono" oninput="pintarListaInicio()"></div><div id="lista-inicio"><div class="cargando">Cargando alumnas…</div></div>';
-  cargarCal(); cargarDia();
+  cargarCal(); cargarDia(); cargarPagos();
   cargarAlumnas().then(pintarListaInicio);
 };
+
+/* ----- Pagos por revisar (comprobantes que suben las alumnas) ----- */
+var pagosVistos = -1;
+function cargarPagos() {
+  var caja = $('#pagos-rev'); if (!caja) return;
+  Aura.llamar('comprobantes', {}, token).then(function (l) {
+    pagosVistos = l.length;
+    if (!l.length) { caja.innerHTML = ''; return; }
+    caja.innerHTML = '<div class="tarjeta pagos-caja"><div class="pagos-cab"><h2>Pagos por revisar <span class="chip rosa">' + l.length + '</span></h2>' +
+      '<span class="mini">Revisa que la transferencia haya llegado y apruébala: el pack se activa solo.</span></div>' +
+      l.map(function (c) {
+        return '<div class="persona" onclick="revisarPago(\'' + c.id + '\')" style="cursor:pointer">' + av(c.nombre, c.foto) +
+          '<div class="datos"><div><b>' + esc(c.nombre) + '</b> · ' + esc(c.que) + '</div><div class="mini">' + plata(c.monto) + ' · enviado ' +
+          (c.fecha.slice(0, 10) === hoy ? 'hoy' : fCorta(c.fecha.slice(0, 10))) + ' ' + c.fecha.slice(11, 16) + '</div></div>' +
+          '<button class="btn peq">Revisar</button></div>';
+      }).join('') + '</div>';
+    Aura.pintarFotos(caja, token);
+  }).catch(function () {});
+}
+function revisarPago(id) {
+  Aura.llamar('comprobantes', {}, token).then(function (l) {
+    var c = l.filter(function (x) { return x.id === id; })[0];
+    if (!c) { toast('Ese pago ya fue revisado'); return cargarPagos(); }
+    modal('<h3>' + esc(c.nombre) + '</h3><p class="sub">' + esc(c.que) + (c.clases ? ' · ' + c.clases + (c.clases === 1 ? ' clase' : ' clases') : '') + ' · <b>' + plata(c.monto) + '</b></p>' +
+      (c.nota ? '<div class="aviso" style="margin-bottom:.7rem">💬 ' + esc(c.nota) + '</div>' : '') +
+      '<div class="comp-img" id="comp-img"><div class="cargando">Cargando comprobante…</div></div>' +
+      '<div class="fila2"><label class="campo"><span>Monto recibido</span><input class="entrada" id="cp-monto" inputmode="numeric" value="' + c.monto + '"></label>' +
+      (c.plan_id ? '<label class="campo"><span>El pack parte el</span><input class="entrada" id="cp-ini" type="date" value="' + hoy + '"></label>' : '<span></span>') + '</div>' +
+      '<div class="acciones"><button class="btn borde" onclick="rechazarPago(\'' + c.id + '\')">Rechazar</button><button class="btn" id="cp-ok" onclick="aprobarPago(\'' + c.id + '\',' + !!c.plan_id + ')">Aprobar y activar</button></div>' +
+      (c.telefono ? '<a class="btn ws bloque" style="margin-top:.6rem" target="_blank" href="' + ws(c.telefono, 'Hola ' + String(c.nombre).split(' ')[0] + ', te escribo por tu pago de ' + c.que + '.') + '">Escribirle por WhatsApp</a>' : ''));
+    Aura.llamar('verComprobante', { id: id }, token).then(function (r) {
+      var z = $('#comp-img'); if (!z) return;
+      z.innerHTML = r.data ? '<a href="#" onclick="verGrande(this.firstChild.src);return false"><img src="' + r.data + '" alt="Comprobante"></a><div class="mini">Toca la imagen para verla grande</div>' : '<p class="vacio">No se pudo cargar la imagen. Revisa el correo que te llegó.</p>';
+    }).catch(function () { var z = $('#comp-img'); if (z) z.innerHTML = '<p class="vacio">No se pudo cargar la imagen.</p>'; });
+  });
+}
+function verGrande(src) { var w = window.open(''); if (w) w.document.write('<title>Comprobante</title><body style="margin:0;background:#222"><img src="' + src + '" style="max-width:100%;display:block;margin:auto">'); }
+function aprobarPago(id, esPlan) {
+  var b = $('#cp-ok'); b.disabled = true; b.textContent = 'Activando…';
+  api('revisarComprobante', { id: id, aprobar: true, monto: val('cp-monto'), inicio: esPlan ? val('cp-ini') : '' }).then(function (r) {
+    cerrarModal(); toast(esPlan ? 'Pack activado · ' + r.saldo + ' clases disponibles. Le avisamos por correo.' : 'Venta registrada. Le avisamos por correo.');
+    cargarPagos(); cargarAlumnas().then(function () { if ($("#lista-inicio")) pintarListaInicio(); });
+  }, function () { b.disabled = false; b.textContent = 'Aprobar y activar'; });
+}
+function rechazarPago(id) {
+  modal('<h3>Rechazar pago</h3><p class="sub">Le llega un correo a la alumna con el motivo.</p>' +
+    '<label class="campo"><span>Motivo</span><input class="entrada" id="cp-mot" placeholder="Ej: no me ha llegado la transferencia"></label>' +
+    '<div class="acciones"><button class="btn claro" onclick="revisarPago(\'' + id + '\')">Volver</button><button class="btn rosa" onclick="api(\'revisarComprobante\',{id:\'' + id + '\',aprobar:false,motivo:val(\'cp-mot\')}).then(function(){cerrarModal();toast(\'Pago rechazado. Le avisamos por correo.\');cargarPagos()})">Rechazar</button></div>');
+}
 function cargarCal() {
   $('#cal-tit').textContent = nombreMes(mesCal);
   api('calendario', { mes: mesCal }).then(function (c) { window._cal = c; pintarCal(c); })

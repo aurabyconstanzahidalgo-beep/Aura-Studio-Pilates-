@@ -195,6 +195,29 @@
     });
   }
 
+  /* Comprobantes: achica sin recortar para que se lea el texto */
+  function achicarImagen(archivo, lado, limite) {
+    return new Promise(function (ok, mal) {
+      var img = new Image(), url = URL.createObjectURL(archivo);
+      img.onload = function () {
+        var esc = Math.min(1, lado / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * esc); c.height = Math.round(img.height * esc);
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var q = 0.85, d = c.toDataURL('image/jpeg', q);
+        while (d.length > limite && q > 0.35) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+        while (d.length > limite && c.width > 300) {
+          var c2 = document.createElement('canvas'); c2.width = Math.round(c.width * 0.8); c2.height = Math.round(c.height * 0.8);
+          c2.getContext('2d').drawImage(c, 0, 0, c2.width, c2.height); c = c2; d = c.toDataURL('image/jpeg', q);
+        }
+        if (d.length > limite) return mal({ mensaje: 'La imagen es muy pesada.' });
+        ok(d);
+      };
+      img.onerror = function () { mal({ mensaje: 'No se pudo leer la imagen.' }); };
+      img.src = url;
+    });
+  }
+
   /* ---------- Llamar ---------- */
   function llamar(accion, args, token) {
     if (DEMO) {
@@ -208,11 +231,27 @@
     return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ accion: accion, args: args || {}, token: token || '' }), redirect: 'follow' })
       .then(function (r) { return r.json(); }, function () { throw { codigo: 'red', mensaje: 'Sin conexión. Revisa tu internet e intenta de nuevo.' }; })
-      .then(function (r) { if (!r.ok) throw { codigo: r.codigo, mensaje: r.error }; return r.datos; });
+      .then(function (r) { if (!r.ok) throw { codigo: r.codigo, mensaje: r.error }; return ordenarHoras(r.datos); });
+  }
+
+  /* Respaldo: deja las horas como 08:10 y ordena las clases de la mañana primero */
+  function hh(v) { var m = String(v).match(/^(\d{1,2}):(\d{2})$/); return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : v; }
+  function ordenarHoras(o, clave) {
+    if (Array.isArray(o)) {
+      o.forEach(function (x) { ordenarHoras(x); });
+      if (clave === 'clases' && o.length && o[0] && typeof o[0] === 'object' && 'inicio' in o[0])
+        o.sort(function (a, b) { return a.inicio < b.inicio ? -1 : 1; });
+      return o;
+    }
+    if (o && typeof o === 'object') for (var k in o) {
+      if ((k === 'inicio' || k === 'fin' || k === 'hora') && typeof o[k] === 'string') o[k] = hh(o[k]);
+      else ordenarHoras(o[k], k);
+    }
+    return o;
   }
 
   window.Aura = {
-    demo: DEMO, llamar: llamar, fotos: fotos, pintarFotos: pintarFotos, achicarFoto: achicarFoto,
+    demo: DEMO, llamar: llamar, fotos: fotos, pintarFotos: pintarFotos, achicarFoto: achicarFoto, achicarImagen: achicarImagen,
     reiniciarDemo: function () { localStorage.removeItem(CLAVE_DEMO); sessionStorage.removeItem('aura_fotos'); fotosMem = {}; motorDemo = null; },
     util: AuraCore.util
   };

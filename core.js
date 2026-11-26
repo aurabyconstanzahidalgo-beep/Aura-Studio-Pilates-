@@ -23,6 +23,8 @@ var AuraCore = (function () {
     Productos:    ['id', 'nombre', 'descripcion', 'precio', 'stock', 'foto', 'activo'],
     Eventos:      ['id', 'fecha', 'hora', 'titulo', 'descripcion', 'lugar', 'precio', 'cupos', 'activo'],
     Fotos:        ['id', 'dueno', 'data'],
+    Comprobantes: ['id', 'fecha', 'alumna_id', 'plan_id', 'producto_id', 'monto', 'archivo', 'donde', 'estado',
+                   'nota', 'revisado_por', 'revisado', 'motivo'],
     Horario:      ['id', 'dia_semana', 'inicio', 'fin', 'tipo', 'profesora_id', 'cupos', 'activo'],
     Clases:       ['id', 'fecha', 'inicio', 'fin', 'tipo', 'profesora_id', 'cupos', 'estado', 'motivo'],
     Reservas:     ['id', 'clase_id', 'alumna_id', 'estado', 'plan_alumna_id', 'creada', 'cancelada'],
@@ -414,6 +416,15 @@ var AuraCore = (function () {
     }
     function sumaMes(mes, n) { var p = mes.split('-'); var d = new Date(Date.UTC(+p[0], +p[1] - 1 + n, 1)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1); }
 
+    function plata(n) { return '$' + String(Math.round(num(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    function vistaComprobante(c) {
+      var p = c.plan_id ? porId('Planes', c.plan_id) : null, pr = c.producto_id ? porId('Productos', c.producto_id) : null;
+      var al = porId('Alumnas', c.alumna_id) || {};
+      return { id: c.id, fecha: c.fecha, alumna_id: c.alumna_id, nombre: al.nombre || 'Alumna', foto: al.foto || '', telefono: al.telefono || '',
+        plan_id: c.plan_id, producto_id: c.producto_id, que: p ? p.nombre : (pr ? pr.nombre : '—'), clases: p ? num(p.clases) : 0,
+        monto: num(c.monto), estado: c.estado, nota: c.nota, motivo: c.motivo, revisado: c.revisado };
+    }
+
     function soloPanel(s, rol) {
       if (s.rol !== 'dueña' && s.rol !== 'profesora') throw err('permiso', 'No tienes permiso para esto.');
       if (rol && s.rol !== rol) throw err('permiso', 'Solo la dueña puede hacer esto.');
@@ -495,7 +506,9 @@ var AuraCore = (function () {
           .map(function (e) { var f = e.clase_id.split('T'); return { clase_id: e.clase_id, fecha: f[0], inicio: f[1] }; });
         return { perfil: perfil(al), saldo: saldo(al.id), deudas: deudas(al.id), planes: planesDe(al.id),
           proximas: proximas, historial: historial.slice(0, 20), espera: espera,
-          cumple: cumpleHoy(al, hoy()), regalo_cumple: cfg('regalo_cumple') };
+          cumple: cumpleHoy(al, hoy()), regalo_cumple: cfg('regalo_cumple'),
+          comprobantes: db.rows('Comprobantes').filter(function (c) { return c.alumna_id === al.id; })
+            .sort(function (x, y) { return x.fecha < y.fecha ? 1 : -1; }).slice(0, 4).map(vistaComprobante) };
       },
 
       clases: function (a, s) {
@@ -752,6 +765,92 @@ var AuraCore = (function () {
         return out;
       },
 
+      /* ----- Pagos con comprobante (la alumna sube el pantallazo, la profe lo aprueba) ----- */
+      enviarComprobante: function (a, s) {
+        var al = soloAlumna(s);
+        var p = a.plan_id ? porId('Planes', a.plan_id) : null, pr = a.producto_id ? porId('Productos', a.producto_id) : null;
+        if (!p && !pr) throw err('datos', 'Elige qué estás pagando.');
+        if ((p && p.activo === 'no') || (pr && pr.activo === 'no')) throw err('datos', 'Eso ya no está disponible.');
+        var data = String(a.data || '');
+        if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(data)) throw err('foto', 'Sube una imagen del comprobante.');
+        var enDrive = !!(env.drive && env.drive.guardarImagen);
+        if (data.length > (enDrive ? 1500000 : 48000)) throw err('foto', 'La imagen es muy pesada.');
+        var pend = db.rows('Comprobantes').filter(function (c) { return c.alumna_id === al.id && c.estado === 'pendiente'; });
+        if (pend.length >= 3) throw err('datos', 'Ya tienes comprobantes en revisión. Espera que Aura los confirme.');
+        var id = nuevoId('CP'), cant = Math.max(1, num(a.cantidad) || 1);
+        var monto = p ? num(p.precio) : num(pr.precio) * cant;
+        var archivo = enDrive ? env.drive.guardarImagen(data, 'Comprobante ' + al.nombre + ' ' + sellos(ahora()).replace(':', '.'))
+                              : guardarFoto('comprobante', data);
+        db.insert('Comprobantes', { id: id, fecha: sellos(ahora()), alumna_id: al.id, plan_id: p ? p.id : '', producto_id: pr ? pr.id : '',
+          monto: String(monto), archivo: archivo, donde: enDrive ? 'drive' : 'foto', estado: 'pendiente',
+          nota: (pr && cant > 1 ? 'Cantidad: ' + cant + '. ' : '') + String(a.nota || '').slice(0, 300), revisado_por: '', revisado: '', motivo: '' });
+        log(al.id, 'comprobante', id + ' ' + (p ? p.nombre : pr.nombre));
+        if (env.avisar) {
+          var que = p ? p.nombre : pr.nombre;
+          db.rows('Usuarios').filter(function (u) { return u.rol === 'dueña' && u.activo !== 'no' && u.correo; }).forEach(function (u) {
+            env.avisar(u.correo, 'Pago por revisar: ' + al.nombre + ' · ' + que,
+              al.nombre + ' envió un comprobante de transferencia.\n\n' +
+              'Compra: ' + que + (pr && cant > 1 ? ' x' + cant : '') + '\nMonto: ' + plata(monto) + '\n' +
+              (a.nota ? 'Mensaje: ' + String(a.nota).slice(0, 300) + '\n' : '') +
+              '\nEl pantallazo va adjunto. Revisa tu banco y apruébalo en el panel (Clases › Pagos por revisar).\n\nAura Studio Pilates',
+              { data: data, nombre: 'comprobante-' + id + '.jpg' });
+          });
+        }
+        return { ok: true, id: id };
+      },
+
+      comprobantes: function (a, s) {
+        if (s.rol === 'alumna') {
+          var yo = soloAlumna(s);
+          return db.rows('Comprobantes').filter(function (c) { return c.alumna_id === yo.id; })
+            .sort(function (x, y) { return x.fecha < y.fecha ? 1 : -1; }).slice(0, 6).map(vistaComprobante);
+        }
+        soloPanel(s);
+        var estado = a.estado || 'pendiente';
+        return db.rows('Comprobantes').filter(function (c) { return estado === 'todos' || c.estado === estado; })
+          .sort(function (x, y) { return estado === 'pendiente' ? (x.fecha < y.fecha ? -1 : 1) : (x.fecha < y.fecha ? 1 : -1); })
+          .slice(0, 60).map(vistaComprobante);
+      },
+
+      verComprobante: function (a, s) {
+        var c = porId('Comprobantes', a.id);
+        if (!c) throw err('datos', 'No encontramos ese comprobante.');
+        if (s.rol === 'alumna') { if (soloAlumna(s).id !== c.alumna_id) throw err('permiso', 'No tienes permiso para esto.'); }
+        else soloPanel(s);
+        if (c.donde === 'drive') return { data: env.drive && env.drive.leerImagen ? env.drive.leerImagen(c.archivo) : '' };
+        var f = porId('Fotos', c.archivo); return { data: f ? f.data : '' };
+      },
+
+      revisarComprobante: function (a, s) {
+        var u = soloPanel(s), c = porId('Comprobantes', a.id);
+        if (!c) throw err('datos', 'No encontramos ese comprobante.');
+        if (c.estado !== 'pendiente') throw err('datos', 'Este comprobante ya fue revisado.');
+        var al = porId('Alumnas', c.alumna_id), res = {};
+        if (a.aprobar) {
+          if (c.plan_id) res = acciones.cargarPlan({ alumna_id: c.alumna_id, plan_id: c.plan_id, inicio: a.inicio || hoy(),
+            monto: a.monto !== undefined && a.monto !== '' ? a.monto : c.monto, medio: 'transferencia', nota: 'Comprobante ' + c.id }, s);
+          else {
+            var cant = num((String(c.nota).match(/^Cantidad: (\d+)/) || [])[1]) || 1;
+            res = acciones.venderProducto({ producto_id: c.producto_id, alumna_id: c.alumna_id, cantidad: cant,
+              monto: a.monto !== undefined && a.monto !== '' ? a.monto : c.monto, medio: 'transferencia' }, s);
+          }
+        }
+        db.update('Comprobantes', c.id, { estado: a.aprobar ? 'aprobado' : 'rechazado', revisado_por: u.id, revisado: sellos(ahora()),
+          motivo: a.aprobar ? '' : String(a.motivo || '').slice(0, 300) });
+        log(u.id, a.aprobar ? 'comprobante_ok' : 'comprobante_no', c.id);
+        if (al && al.correo && env.avisar) {
+          var v = vistaComprobante(porId('Comprobantes', c.id)), nom = String(al.nombre).split(' ')[0];
+          env.avisar(al.correo, a.aprobar ? '¡Tu pago está confirmado! · Aura' : 'Revisemos tu pago · Aura',
+            a.aprobar
+              ? 'Hola ' + nom + ',\n\nConfirmamos tu pago de ' + v.que + ' (' + plata(num(c.monto)) + ').' +
+                (c.plan_id ? '\n\nYa puedes entrar a la app y elegir tus clases del mes (Clases › Agendar mi horario del mes).' : '\n\nTe lo entregamos en tu próxima clase.') +
+                '\n\n¡Gracias!\nAura Studio Pilates'
+              : 'Hola ' + nom + ',\n\nNo pudimos confirmar tu pago de ' + v.que + '.' + (a.motivo ? '\nMotivo: ' + String(a.motivo).slice(0, 300) : '') +
+                '\n\nEscríbenos por WhatsApp y lo vemos juntas.\n\nAura Studio Pilates');
+        }
+        return { ok: true, saldo: res.saldo, deudas_pagadas: res.deudas_pagadas || 0 };
+      },
+
       /* ----- Panel: alumnas nuevas ----- */
       crearAlumna: function (a, s) {
         var u = soloPanel(s), r = validarNuevaAlumna(a, true);
@@ -821,7 +920,7 @@ var AuraCore = (function () {
 
       notificaciones: function (a, s) {
         soloPanel(s);
-        var tipos = { reservar: 'reservó', cancelar: 'canceló', serie: 'reservó su horario del mes', espera: 'se anotó en lista de espera', espera_asignada: 'tomó un cupo liberado', registro: 'se registró en la app' };
+        var tipos = { reservar: 'reservó', cancelar: 'canceló', serie: 'reservó su horario del mes', espera: 'se anotó en lista de espera', espera_asignada: 'tomó un cupo liberado', registro: 'se registró en la app', comprobante: 'envió un comprobante de pago' };
         var al = {}; db.rows('Alumnas').forEach(function (x) { al[x.id] = x; });
         var DS = ['', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
         var out = [];
@@ -832,6 +931,8 @@ var AuraCore = (function () {
           if (/^\d{4}-\d{2}-\d{2}T/.test(cid)) {
             var f = cid.split('T'); texto = DS[diaSemana(f[0])] + ' ' + (+f[0].slice(8)) + '/' + (+f[0].slice(5, 7)) + ' · ' + normHora(f[1]);
             if (l.accion === 'cancelar' && /tardía/.test(l.detalle)) texto += ' (tarde, se descuenta)';
+          } else if (l.accion === 'comprobante') {
+            texto = '· ' + String(l.detalle).split(' ').slice(1).join(' ');
           } else if (l.accion === 'serie') {
             var p = String(l.detalle).split(' '); texto = 'todos los ' + DS[+p[0]] + ' ' + normHora(p[1]);
           }
@@ -840,7 +941,8 @@ var AuraCore = (function () {
         });
         out.sort(function (x, y) { return x.fecha < y.fecha ? 1 : -1; });
         var desde = String(a.desde || '');
-        return { ahora: sellos(ahora()), nuevas: desde ? out.filter(function (n) { return n.fecha > desde; }).length : out.length, lista: out.slice(0, 60) };
+        var pendientes = db.rows('Comprobantes').filter(function (c) { return c.estado === 'pendiente'; }).length;
+        return { ahora: sellos(ahora()), pendientes: pendientes, nuevas: desde ? out.filter(function (n) { return n.fecha > desde; }).length : out.length, lista: out.slice(0, 60) };
       },
 
       /* ----- Panel: horario, feriados, avisos ----- */

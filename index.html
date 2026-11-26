@@ -26,6 +26,17 @@
   main { padding: .4rem 1.2rem 1rem; }
   .saludo { font-family: var(--serif); font-size: 1.9rem; margin: .4rem 0 1rem; line-height: 1.1; }
   .saludo small { display: block; font-family: var(--sans); font-size: .85rem; color: var(--suave); margin-top: .35rem; }
+  .pasos { display: grid; gap: .85rem; margin: .4rem 0 1.1rem; }
+  .paso { display: flex; gap: .7rem; align-items: flex-start; font-size: .9rem; }
+  .paso > span { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--lavanda); color: var(--morado-osc); font-weight: 800; display: grid; place-items: center; font-size: .8rem; }
+  .paso > div { flex: 1; min-width: 0; }
+  .paso .mini { font-size: .82rem; color: var(--suave); margin-top: .2rem; }
+  .datos-tr { white-space: pre-line; background: var(--fondo); border-radius: 12px; padding: .6rem .75rem; margin: .4rem 0 .45rem; font-size: .85rem; }
+  .sube-comp { display: block; margin: .45rem 0; border: 2px dashed #D9B8BE; border-radius: 14px; padding: .75rem; text-align: center; color: var(--morado-osc); font-weight: 700; cursor: pointer; background: #fff; }
+  .sube-comp img { display: block; max-width: 100%; max-height: 220px; margin: .55rem auto 0; border-radius: 8px; }
+  .paso textarea { width: 100%; box-sizing: border-box; border: 1px solid #E5D9DB; border-radius: 12px; padding: .55rem .7rem; font: inherit; font-size: .85rem; }
+  .aviso.pago { background: #FFF6E5; color: #7A5A1E; }
+  .aviso.pago.ok { background: var(--salvia-claro); color: #4F6A4A; }
   .saldo { background: linear-gradient(135deg, var(--morado) 0%, #D29AA3 100%); color: #fff; border-radius: 22px; padding: 1.2rem 1.3rem; position: relative; overflow: hidden; }
   .saldo::after { content: ''; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.08); }
   .saldo .n { font-family: var(--serif); font-size: 3.2rem; line-height: 1; }
@@ -306,6 +317,7 @@ function vInicio() {
   var vence = vig.map(function (p) { return p.vence; }).filter(Boolean).sort()[0];
   var h = '<h1 class="saludo">Hola, ' + esc(nombre) + '<small>' + mayus(fLarga(pub.hoy)) + '</small></h1>';
   if (yo.cumple) h += '<div class="aviso cumple"><b>¡Feliz cumpleaños, ' + esc(nombre) + '!</b> Todo el equipo de Aura te saluda.' + (yo.regalo_cumple ? ' 🎁 ' + esc(yo.regalo_cumple) + '.' : '') + '</div>';
+  h += avisoPagos();
   if (yo.deudas) h += '<div class="aviso deuda">Tienes ' + yo.deudas + (yo.deudas > 1 ? ' clases' : ' clase') + ' sin plan. Renueva tu plan para dejarla al día.</div>';
   h += '<div class="saldo"><div class="n">' + yo.saldo + '</div><div class="t">' + (yo.saldo === 1 ? 'clase disponible' : 'clases disponibles') + '</div>' +
     '<div class="v">' + (vig.length ? (vence ? 'Tu plan vence el ' + fLarga(vence) : 'Tu plan no tiene vencimiento') : 'No tienes un plan activo') + '</div></div>';
@@ -504,10 +516,10 @@ function salirEspera(id) { api('salirEspera', { clase_id: id }).then(function ()
 
 /* ---------- MI PLAN ---------- */
 function vPlan() {
-  var h = '<h1 class="saludo" style="font-size:1.7rem">Mi plan</h1><div class="lista">';
+  var h = '<h1 class="saludo" style="font-size:1.7rem">Mi plan</h1>' + avisoPagos() + '<div class="lista">';
   var vig = yo.planes.filter(function (p) { return p.estado === 'activo' && !p.vencido && (p.vigente || p.usadas > 0); })
     .sort(function (a, b) { return (b.libres > 0) - (a.libres > 0); }).slice(0, 4);
-  if (!vig.length) h += '<div class="tarjeta vacio">No tienes un plan activo.</div>';
+  if (!vig.length) h += '<div class="tarjeta vacio">No tienes un plan activo.<br><button class="btn" style="margin-top:.9rem" onclick="tab(\'tienda\')">Comprar un pack</button></div>';
   vig.forEach(function (p) {
     h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.vence ? 'Vence el ' + fLarga(p.vence) : 'Sin vencimiento') + '</div></div>' +
       '<div style="text-align:right"><div class="pre">' + p.libres + '/' + p.total + '</div><div class="det">' + (p.libres ? 'disponibles' : 'agotado') + '</div></div></div>' +
@@ -523,17 +535,57 @@ function vPlan() {
   }
   $('#contenido').innerHTML = h;
 }
-function loQuiero(id) {
-  var p = pub.planes.filter(function (x) { return x.id === id; })[0];
-  modal('<h3>' + esc(p.nombre) + '</h3><p class="sub">' + p.clases + (p.clases === 1 ? ' clase' : ' clases') + ' · ' + (p.dias ? p.dias + ' días' : 'sin vencimiento') + ' · <b>' + plata(p.precio) + '</b></p>' +
-    (pub.transferencia ? '<div class="tarjeta" style="box-shadow:none;background:var(--fondo);font-size:.9rem;white-space:pre-line"><b>Datos de transferencia</b>\n' + esc(pub.transferencia) + '</div>' : '') +
-    '<p style="font-size:.88rem;color:var(--suave)">Transfiere y mándanos el comprobante por WhatsApp. Constanza activa tu plan y lo ves aquí al tiro.</p>' +
-    '<a class="btn ws bloque" target="_blank" href="' + ws('Hola Constanza, quiero el plan ' + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Escribir por WhatsApp</a>');
+function loQuiero(id, esProd) {
+  var p = (esProd ? pub.productos : pub.planes).filter(function (x) { return x.id === id; })[0];
+  var det = esProd ? esc(p.descripcion || '') + ' · <b>' + plata(p.precio) + '</b>'
+                   : p.clases + (p.clases === 1 ? ' clase' : ' clases') + ' · ' + (p.dias ? p.dias + ' días' : 'sin vencimiento') + ' · <b>' + plata(p.precio) + '</b>';
+  modal('<h3>' + esc(p.nombre) + '</h3><p class="sub">' + det + '</p>' +
+    '<div class="pasos"><div class="paso"><span>1</span><div><b>Transfiere ' + plata(p.precio) + '</b>' +
+      (pub.transferencia ? '<div class="datos-tr">' + esc(pub.transferencia) + '</div><button class="btn claro peq" onclick="copiarDatos(this)">Copiar datos</button>' : '<div class="mini">Pídele los datos a Constanza por WhatsApp.</div>') + '</div></div>' +
+    '<div class="paso"><span>2</span><div><b>Sube el pantallazo del comprobante</b>' +
+      '<label class="sube-comp" id="cp-zona"><input type="file" accept="image/*" id="cp-arch" onchange="verComp(this)" hidden><span id="cp-txt">📎 Elegir imagen</span><img id="cp-prev" alt="" hidden></label>' +
+      '<textarea id="cp-nota" rows="2" maxlength="300" placeholder="Mensaje para Constanza (opcional)"></textarea></div></div>' +
+    '<div class="paso"><span>3</span><div><b>Constanza lo confirma</b><div class="mini">' + (esProd ? 'Te avisamos por correo y te lo entrega en clase.' : 'Te llega un correo y tus clases aparecen aquí. Ahí eliges tus días y horas del mes.') + '</div></div></div></div>' +
+    '<button class="btn bloque" id="cp-env" disabled onclick="enviarComp(\'' + p.id + '\',' + (esProd ? 'true' : 'false') + ')">Enviar comprobante</button>' +
+    '<a class="btn ws bloque" style="margin-top:.55rem" target="_blank" href="' + ws('Hola Constanza, quiero ' + (esProd ? '' : 'el plan ') + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Prefiero escribir por WhatsApp</a>');
+}
+function copiarDatos(b) {
+  var t = pub.transferencia;
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { b.textContent = 'Copiados ✓'; }, function () { toast('Mantén presionado el texto para copiarlo'); });
+}
+var compData = '';
+function verComp(inp) {
+  var f = inp.files[0]; if (!f) return;
+  $('#cp-txt').textContent = 'Preparando…'; $('#cp-env').disabled = true;
+  Aura.achicarImagen(f, Aura.demo ? 900 : 1600, Aura.demo ? 45000 : 1200000).then(function (d) {
+    compData = d; var im = $('#cp-prev'); im.src = d; im.hidden = false;
+    $('#cp-txt').textContent = 'Cambiar imagen'; $('#cp-env').disabled = false;
+  }, function (e) { compData = ''; $('#cp-txt').textContent = '📎 Elegir imagen'; toast(e.mensaje); });
+}
+function enviarComp(id, esProd) {
+  if (!compData) return toast('Sube el pantallazo primero.');
+  var b = $('#cp-env'); b.disabled = true; b.textContent = 'Enviando…';
+  var args = { data: compData, nota: $('#cp-nota').value }; args[esProd ? 'producto_id' : 'plan_id'] = id;
+  api('enviarComprobante', args).then(function () {
+    compData = '';
+    modal('<div style="text-align:center;font-size:2.4rem">✓</div><h3 style="text-align:center">¡Comprobante enviado!</h3>' +
+      '<p class="sub" style="text-align:center">Constanza lo revisa y te llega un correo cuando esté confirmado.' + (esProd ? '' : ' Ahí ya puedes elegir tus clases.') + '</p>' +
+      '<button class="btn bloque" onclick="cerrarModal()">Listo</button>');
+    cargarYo();
+  }, function (e) { b.disabled = false; b.textContent = 'Enviar comprobante'; toast(e.mensaje); });
+}
+function avisoPagos() {
+  var c = (yo.comprobantes || [])[0]; if (!c) return '';
+  var dias = c.revisado ? (Date.parse(pub.hoy) - Date.parse(String(c.revisado).slice(0, 10))) / 864e5 : 0;
+  if (c.estado === 'pendiente') return '<div class="aviso pago">🕓 <b>Tu pago de ' + esc(c.que) + ' está en revisión.</b> Te avisamos por correo apenas Constanza lo confirme.</div>';
+  if (c.estado === 'aprobado' && dias <= 3) return '<div class="aviso pago ok">✓ <b>¡Pago confirmado!</b> ' + (c.plan_id ? esc(c.que) + ' ya está activo. <button class="link" onclick="tab(\'clases\');setTimeout(abrirSerie,300)">Elige tus clases del mes ›</button>' : esc(c.que) + ': te lo entregamos en clase.') + '</div>';
+  if (c.estado === 'rechazado' && dias <= 7) return '<div class="aviso deuda"><b>No pudimos confirmar tu pago de ' + esc(c.que) + '.</b>' + (c.motivo ? ' ' + esc(c.motivo) + '.' : '') + ' <a target="_blank" href="' + ws('Hola Constanza, te escribo por mi pago de ' + c.que + '.') + '">Escríbenos</a></div>';
+  return '';
 }
 
 /* ---------- TIENDA ---------- */
 function vTienda() {
-  var h = '<h1 class="saludo" style="font-size:1.7rem">Tienda<small>Packs de clases y accesorios. Pides por WhatsApp y pagas por transferencia.</small></h1>';
+  var h = '<h1 class="saludo" style="font-size:1.7rem">Tienda<small>Transfiere, sube el pantallazo y listo: Constanza activa tu pack.</small></h1>';
   h += '<div class="seccion" style="margin-top:.4rem"><h2>Packs de clases</h2></div><div class="lista">';
   pub.planes.forEach(function (p) {
     h += '<div class="tarjeta"><div class="plan"><div><div class="nom">' + esc(p.nombre) + '</div><div class="det">' + (p.clases === 1 ? (p.dias ? '1 clase' : 'Clase suelta') : p.clases + ' clases al mes') +
@@ -547,7 +599,7 @@ function vTienda() {
       var agotado = p.stock !== null && p.stock <= 0;
       h += '<div class="tarjeta prod"><span class="img" data-foto="' + esc(p.foto) + '">' + esc(p.nombre.charAt(0)) + '</span><div style="flex:1;min-width:0"><div style="font-weight:800">' + esc(p.nombre) + '</div>' +
         '<div style="font-size:.82rem;color:var(--suave)">' + esc(p.descripcion) + '</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem"><span class="pre" style="font-family:var(--serif);font-size:1.2rem;font-weight:600">' + plata(p.precio) + '</span>' +
-        (agotado ? '<span class="chip gris">Agotado</span>' : '<a class="btn claro peq" target="_blank" href="' + ws('Hola Constanza, quiero ' + p.nombre + ' (' + plata(p.precio) + '). Soy ' + yo.perfil.nombre + '.') + '">Lo quiero</a>') + '</div></div></div>';
+        (agotado ? '<span class="chip gris">Agotado</span>' : '<button class="btn claro peq" onclick="loQuiero(\'' + p.id + '\',true)">Lo quiero</button>') + '</div></div></div>';
     });
     h += '</div>';
   }
