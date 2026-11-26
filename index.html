@@ -26,6 +26,12 @@
   main { padding: .4rem 1.2rem 1rem; }
   .saludo { font-family: var(--serif); font-size: 1.9rem; margin: .4rem 0 1rem; line-height: 1.1; }
   .saludo small { display: block; font-family: var(--sans); font-size: .85rem; color: var(--suave); margin-top: .35rem; }
+  .pol-ini { cursor: pointer; }
+  .pol-ini .texto-pol { font-size: .86rem; line-height: 1.5; color: var(--suave); white-space: pre-line; }
+  .frase { position: relative; background: #fff; border-radius: 20px; padding: 1.1rem 1.2rem 1rem 3rem; margin: 0 0 1rem; box-shadow: 0 6px 18px rgba(59,47,49,.06); }
+  .frase .comilla { position: absolute; left: .9rem; top: .3rem; font-family: var(--serif); font-size: 3rem; line-height: 1; color: var(--morado); }
+  .frase p { margin: 0; font-family: var(--serif); font-size: 1.12rem; line-height: 1.35; color: #3B2F31; font-style: italic; }
+  .frase small { display: block; margin-top: .45rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); }
   .pasos { display: grid; gap: .85rem; margin: .4rem 0 1.1rem; }
   .paso { display: flex; gap: .7rem; align-items: flex-start; font-size: .9rem; }
   .paso > span { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--lavanda); color: var(--morado-osc); font-weight: 800; display: grid; place-items: center; font-size: .8rem; }
@@ -317,6 +323,7 @@ function vInicio() {
   var vence = vig.map(function (p) { return p.vence; }).filter(Boolean).sort()[0];
   var h = '<h1 class="saludo">Hola, ' + esc(nombre) + '<small>' + mayus(fLarga(pub.hoy)) + '</small></h1>';
   if (yo.cumple) h += '<div class="aviso cumple"><b>¡Feliz cumpleaños, ' + esc(nombre) + '!</b> Todo el equipo de Aura te saluda.' + (yo.regalo_cumple ? ' 🎁 ' + esc(yo.regalo_cumple) + '.' : '') + '</div>';
+  if (pub.frases_activas && pub.frase) h += '<div class="frase"><span class="comilla">“</span><p>' + esc(pub.frase) + '</p><small>Frase del día · Aura</small></div>';
   h += avisoPagos();
   if (yo.deudas) h += '<div class="aviso deuda">Tienes ' + yo.deudas + (yo.deudas > 1 ? ' clases' : ' clase') + ' sin plan. Renueva tu plan para dejarla al día.</div>';
   h += '<div class="saldo"><div class="n">' + yo.saldo + '</div><div class="t">' + (yo.saldo === 1 ? 'clase disponible' : 'clases disponibles') + '</div>' +
@@ -343,6 +350,12 @@ function vInicio() {
         (e.descripcion ? '<div style="font-size:.85rem;margin-top:.3rem">' + esc(e.descripcion) + '</div>' : '') +
         '<a class="link" style="padding:.4rem 0 0;display:inline-block" target="_blank" href="' + ws('Hola Constanza, quiero inscribirme en ' + e.titulo + ' (' + fCorta(e.fecha) + '). Soy ' + yo.perfil.nombre + '.') + '">Quiero ir</a></div></div>';
     }).join('') + '</div>';
+  }
+  if (pub.politicas) {
+    var pol = String(pub.politicas).trim(), corta = pol.length > 280 ? pol.slice(0, 280).replace(/\s+\S*$/, '') + '…' : pol;
+    h += '<div class="seccion"><h2>Políticas de Aura</h2></div><div class="tarjeta pol-ini" onclick="verPoliticas()">' +
+      '<div class="texto-pol">' + esc(corta) + '</div>' +
+      '<button class="btn claro bloque peq" style="margin-top:.8rem">Leer las políticas completas</button></div>';
   }
   c.innerHTML = h;
 }

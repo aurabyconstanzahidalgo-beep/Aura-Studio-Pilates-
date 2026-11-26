@@ -46,6 +46,8 @@ var AuraCore = (function () {
     horas_cancelacion: '12',      // cancelar sin costo hasta X horas antes
     dias_adelanto: '14',          // cuántos días hacia adelante se ve el horario
     permitir_sin_saldo: 'si',     // 'si' = reserva y queda debiendo / 'no' = se bloquea
+    frases_activas: 'si',
+    frases: 'Cada clase cuenta. Hoy también suma.\nTu cuerpo es tu hogar: cuídalo con cariño.\nNo se trata de ser perfecta, se trata de volver al reformer.\nRespira profundo. Todo empieza desde tu centro.\nLa fuerza también se construye en silencio.\nMoverte es un regalo que te haces a ti misma.\nPequeños avances, grandes cambios.\nHoy elige sentirte bien en tu cuerpo.\nLa constancia le gana al cansancio.\nAlarga, respira, suelta. Lo demás puede esperar.\nTu postura cuenta tu historia: haz que sea una buena.\nUn cuerpo fuerte, una mente tranquila.\nLa mejor versión de ti se entrena con paciencia.\nCelebra lo que tu cuerpo ya puede hacer.\nCuando te cueste, recuerda por qué empezaste.\nEl reformer te espera: tú pones las ganas, nosotras el resto.\nMenos prisa, más control. Así se avanza.\nEsta hora es solo tuya. Disfrútala.\nTu bienestar no es un lujo, es una prioridad.\nCada respiración es una oportunidad de empezar de nuevo.\nHoy entrena con calma y sal con energía.\nLa flexibilidad también es de la mente.\nLo que haces por ti hoy, te lo agradece tu cuerpo mañana.\nConecta con tu centro y todo lo demás se ordena.\nVen como estés: aquí sumamos, no comparamos.\nUn día a la vez, una clase a la vez.\nTu esfuerzo se nota, aunque tú todavía no lo veas.\nMoverte bien es sentirte bien.\nRegálate un momento de pausa y movimiento.\nGracias por elegirte. Nos vemos en el estudio 🌿',
     regalo_cumple: ''
   };
 
@@ -417,6 +419,13 @@ var AuraCore = (function () {
     function sumaMes(mes, n) { var p = mes.split('-'); var d = new Date(Date.UTC(+p[0], +p[1] - 1 + n, 1)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1); }
 
     function plata(n) { return '$' + String(Math.round(num(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+    function listaFrases() { return String(cfg('frases') || '').split('\n').map(function (f) { return f.trim(); }).filter(Boolean); }
+    /* Una frase distinta cada día, igual para todas las alumnas */
+    function fraseDelDia(fecha) {
+      var l = listaFrases(); if (!l.length) return '';
+      var f = fecha || hoy(), d = Math.floor(Date.UTC(+f.slice(0, 4), +f.slice(5, 7) - 1, +f.slice(8, 10)) / 864e5);
+      return l[((d % l.length) + l.length) % l.length];
+    }
     function vistaComprobante(c) {
       var p = c.plan_id ? porId('Planes', c.plan_id) : null, pr = c.producto_id ? porId('Productos', c.producto_id) : null;
       var al = porId('Alumnas', c.alumna_id) || {};
@@ -450,7 +459,7 @@ var AuraCore = (function () {
           soporte: cfg('soporte'), instagram: cfg('instagram'), politicas: cfg('politicas'),
           horas_cierre: num(cfg('horas_cierre_reserva')), texto_cierre: textoCierre(), horas_cancelacion: num(cfg('horas_cancelacion')),
           dias_adelanto: num(cfg('dias_adelanto')), planes: catalogo(), productos: productos(false), eventos: eventos(false),
-          hoy: hoy(), ahora: horaDe(ahora()) };
+          hoy: hoy(), ahora: horaDe(ahora()), frases_activas: cfg('frases_activas') !== 'no', frases: listaFrases(), frase: fraseDelDia() };
       },
 
       registro: function (a) {
@@ -1014,7 +1023,7 @@ var AuraCore = (function () {
       guardarAjustes: function (a, s) {
         var u = soloPanel(s, 'dueña');
         var permitidas = ['nombre_estudio', 'whatsapp', 'soporte', 'instagram', 'transferencia', 'politicas', 'cupos_por_clase',
-          'cierre_modo', 'cierre_hora', 'horas_cierre_reserva', 'horas_cancelacion', 'dias_adelanto', 'permitir_sin_saldo', 'regalo_cumple'];
+          'cierre_modo', 'cierre_hora', 'horas_cierre_reserva', 'horas_cancelacion', 'dias_adelanto', 'permitir_sin_saldo', 'regalo_cumple', 'frases', 'frases_activas'];
         var existentes = {}; db.rows('Config').forEach(function (r) { existentes[r.clave] = 1; });
         var n = 0;
         Object.keys(a.valores || {}).forEach(function (k) {

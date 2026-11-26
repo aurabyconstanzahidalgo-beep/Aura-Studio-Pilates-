@@ -1,6 +1,6 @@
 /* Aura · service worker: la app abre rápido y se actualiza sola.
    Si cambias archivos, sube el número de VERSION. */
-var VERSION = 'aura-v19';
+var VERSION = 'aura-v21';
 var ARCHIVOS = ['./', 'index.html', 'aura.css', 'core.js', 'api.js', 'nav.js', 'config.js', 'manifest.json', 'icon-192.png', 'icon-512.png', 'logo.jpg', 'fondo.jpg', 'fondo-movil.jpg'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(ARCHIVOS); }).then(function () { return self.skipWaiting(); }));

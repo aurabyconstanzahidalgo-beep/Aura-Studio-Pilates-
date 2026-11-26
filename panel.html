@@ -96,6 +96,14 @@
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
   .aviso { border-radius: 14px; padding: .65rem .85rem; font-size: .88rem; background: var(--lavanda); }
+  .frases-caja { margin-top: 2rem; }
+  .frases-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .8rem; }
+  .frases-cab h2 { font-family: var(--serif); font-size: 1.35rem; margin: 0 0 .2rem; }
+  .frase-hoy { background: var(--lavanda); border-radius: 14px; padding: .8rem 1rem; margin-bottom: .8rem; }
+  .frase-hoy p { margin: .45rem 0 0; font-family: var(--serif); font-style: italic; font-size: 1.15rem; color: #3B2F31; }
+  .frases-lista { margin: 0 0 .6rem; padding-left: 1.6rem; columns: 2 320px; column-gap: 2.2rem; font-size: .9rem; line-height: 1.45; }
+  .frases-lista li { margin-bottom: .45rem; break-inside: avoid; color: var(--suave); }
+  .frases-lista li.es-hoy { color: var(--morado-osc); font-weight: 700; }
   .pagos-caja { margin-bottom: 1.2rem; border: 2px solid #F0D9A8; background: #FFFBF2; }
   .pagos-cab { margin-bottom: .5rem; } .pagos-cab h2 { font-family: var(--serif); font-size: 1.35rem; margin: 0 0 .2rem; }
   .chip.pago { background: #FFF1D6; color: #8A6417; }
@@ -278,11 +286,38 @@ VISTAS.dia = function () {
     '<button class="redondo" onclick="moverDia(1)">›</button></div>' +
     '<div class="barra-acc"><button class="btn claro peq" onclick="abrirIG()">Horario para Instagram</button><button class="btn borde peq" onclick="feriadoDia()">Suspender el día (feriado)</button>' +
     '<button class="btn borde peq" onclick="avisoTodas()">Enviar correo a todas</button></div><div id="dia-c"><div class="cargando">Cargando…</div></div>' +
+    '<div id="frases-c"></div>' +
     '<h2 class="sec" style="margin-top:2rem">Tus alumnas</h2><div class="lupa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>' +
     '<input class="entrada" id="qi" placeholder="Buscar alumna por nombre, RUT, correo o teléfono" oninput="pintarListaInicio()"></div><div id="lista-inicio"><div class="cargando">Cargando alumnas…</div></div>';
-  cargarCal(); cargarDia(); cargarPagos();
+  cargarCal(); cargarDia(); cargarPagos(); pintarFrases();
   cargarAlumnas().then(pintarListaInicio);
 };
+
+/* ----- Frases de motivación que ven las alumnas en su inicio ----- */
+var frasesTodas = false;
+function pintarFrases() {
+  var c = $('#frases-c'); if (!c || !pub) return;
+  var l = pub.frases || [], hoyF = pub.frase, ver = frasesTodas ? l : l.slice(0, 8);
+  c.innerHTML = '<div class="tarjeta frases-caja"><div class="frases-cab"><div><h2>Frases para tus alumnas</h2>' +
+    '<span class="mini">' + (pub.frases_activas ? 'Cada día les aparece una distinta en el inicio de la app.' : 'Están apagadas: tus alumnas no las ven.') + '</span></div>' +
+    (rol === 'dueña' ? '<button class="btn claro peq" onclick="editarFrases()">Editar</button>' : '') + '</div>' +
+    (hoyF && pub.frases_activas ? '<div class="frase-hoy"><span class="chip rosa">Hoy ven</span><p>“' + esc(hoyF) + '”</p></div>' : '') +
+    '<ol class="frases-lista">' + ver.map(function (f) { return '<li' + (f === hoyF ? ' class="es-hoy"' : '') + '>' + esc(f) + '</li>'; }).join('') + '</ol>' +
+    (l.length > 8 ? '<button class="link" onclick="frasesTodas=!frasesTodas;pintarFrases()">' + (frasesTodas ? 'Ver menos' : 'Ver las ' + l.length + ' frases') + '</button>' : '') +
+    (!l.length ? '<p class="vacio">No hay frases. Toca Editar para agregar.</p>' : '') + '</div>';
+}
+function editarFrases() {
+  modal('<h3>Frases de motivación</h3><p class="sub">Una frase por línea. Cada día tus alumnas ven una distinta en el inicio de la app, en orden.</p>' +
+    '<label class="chk" style="display:flex;gap:.5rem;align-items:center;margin-bottom:.7rem"><input type="checkbox" id="fr-on"' + (pub.frases_activas ? ' checked' : '') + '> Mostrar frases a las alumnas</label>' +
+    '<textarea class="entrada" id="fr-t" rows="14" style="width:100%;font-size:.92rem;line-height:1.5">' + esc((pub.frases || []).join('\n')) + '</textarea>' +
+    '<div class="acciones"><button class="btn claro" onclick="cerrarModal()">Cancelar</button><button class="btn" onclick="guardarFrases()">Guardar</button></div>');
+}
+function guardarFrases() {
+  var t = val('fr-t').split('\n').map(function (x) { return x.trim(); }).filter(Boolean).join('\n');
+  api('guardarAjustes', { valores: { frases: t, frases_activas: $('#fr-on').checked ? 'si' : 'no' } }).then(function () {
+    cerrarModal(); toast('Frases guardadas'); return refrescarPub();
+  }).then(pintarFrases);
+}
 
 /* ----- Pagos por revisar (comprobantes que suben las alumnas) ----- */
 var pagosVistos = -1;
