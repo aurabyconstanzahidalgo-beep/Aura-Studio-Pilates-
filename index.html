@@ -27,6 +27,9 @@
   .saludo { font-family: var(--serif); font-size: 1.9rem; margin: .4rem 0 1rem; line-height: 1.1; }
   .saludo small { display: block; font-family: var(--sans); font-size: .85rem; color: var(--suave); margin-top: .35rem; }
   .pol-ini { cursor: pointer; }
+  .pol-img { display: block; width: 100%; max-height: 68vh; object-fit: contain; border-radius: 16px; background: #EDEBEA; }
+  .pol-mas { margin-top: .8rem; font-size: .88rem; } .pol-mas summary { cursor: pointer; color: var(--morado-osc); font-weight: 700; padding: .3rem 0; }
+  .pol-mas .texto-pol { margin-top: .5rem; color: var(--suave); }
   .pol-ini .texto-pol { font-size: .86rem; line-height: 1.5; color: var(--suave); white-space: pre-line; }
   .frase { position: relative; background: #fff; border-radius: 20px; padding: 1.1rem 1.2rem 1rem 3rem; margin: 0 0 1rem; box-shadow: 0 6px 18px rgba(59,47,49,.06); }
   .frase .comilla { position: absolute; left: .9rem; top: .3rem; font-family: var(--serif); font-size: 3rem; line-height: 1; color: var(--morado); }
@@ -309,7 +312,9 @@ function tab(t, sinHist) {
 function cargarYo() { return api('yo').then(function (r) { yo = r; var i = $('#ini'); i.textContent = r.perfil.nombre.charAt(0); i.dataset.foto = r.perfil.foto || ''; Aura.pintarFotos(i.parentNode, token); return r; }); }
 function iniciales(n) { var p = String(n).split(' '); return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
 function verPoliticas() {
-  modal('<h3>Políticas de Aura</h3><div class="texto-pol">' + esc(pub.politicas || 'Pronto publicaremos las políticas del estudio.') + '</div><button class="btn bloque" style="margin-top:1.2rem" onclick="cerrarModal()">Entendido</button>');
+  modal('<img class="pol-img" src="politicas.jpg" alt="Políticas de Aura: tolerancia de 5 minutos una vez iniciada la clase y cancelación con 12 horas de anticipación">' +
+    (pub.politicas ? '<details class="pol-mas"><summary>Ver todas las políticas en texto</summary><div class="texto-pol">' + esc(pub.politicas) + '</div></details>' : '') +
+    '<button class="btn bloque" style="margin-top:1rem" onclick="cerrarModal()">Entendido</button>');
 }
 function empezar() {
   ir('app'); $('#contenido').innerHTML = '<div class="cargando">Cargando…</div>';
