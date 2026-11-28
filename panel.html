@@ -96,6 +96,8 @@
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
   .aviso { border-radius: 14px; padding: .65rem .85rem; font-size: .88rem; background: var(--lavanda); }
+  .chk-tr { display: flex; gap: .5rem; align-items: flex-start; margin-top: .7rem; font-size: .86rem; color: var(--suave); cursor: pointer; }
+  .chk-tr input { margin-top: .2rem; }
   .frases-caja { margin-top: 2rem; }
   .frases-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: .8rem; }
   .frases-cab h2 { font-family: var(--serif); font-size: 1.35rem; margin: 0 0 .2rem; }
@@ -651,8 +653,11 @@ function ficha(id) {
     h += '<div class="bloque-f"><h4>Cargar plan</h4><div class="fila2"><select class="entrada" id="cp-plan" onchange="$(\'#cp-monto\').value=this.selectedOptions[0].dataset.p">' +
       f.catalogo.map(function (p) { return '<option value="' + p.id + '" data-p="' + p.precio + '">' + esc(p.nombre) + ' · ' + plata(p.precio) + '</option>'; }).join('') + '</select>' +
       '<select class="entrada" id="cp-medio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option></select></div>' +
+      '<label class="chk-tr"><input type="checkbox" id="cp-tr" onchange="modoTraspaso(this.checked)"> Lo pagó antes de la app (traspasar las clases que le quedan)</label>' +
+      '<div class="fila2 oculto" id="cp-trc" style="margin-top:.6rem"><label class="campo"><span>Fecha en que pagó o partió el plan</span><input class="entrada" id="cp-ini" type="date" value="' + hoy + '"></label>' +
+      '<label class="campo"><span>Clases que le quedan</span><input class="entrada" id="cp-lib" inputmode="numeric" placeholder="Ej: 6"></label></div>' +
       '<div class="fila2" style="margin-top:.6rem"><input class="entrada" id="cp-monto" inputmode="numeric" value="' + (f.catalogo[0] ? f.catalogo[0].precio : '') + '" placeholder="Monto">' +
-      '<button class="btn" onclick="cargarPlan(\'' + a.id + '\')">Activar plan</button></div></div>';
+      '<button class="btn" id="cp-btn" onclick="cargarPlan(\'' + a.id + '\')">Activar plan</button></div></div>';
     h += '<div class="bloque-f"><h4>Planes</h4>' + (f.planes.length ? f.planes.slice().reverse().map(function (p) {
       return '<div class="dato"><span>' + esc(p.nombre) + '<br><small>' + fCorta(p.inicio) + ' → ' + (p.vence ? fCorta(p.vence) : 'sin venc.') + '</small></span><b>' + (p.vigente ? p.libres + ' de ' + p.total : (p.vencido ? 'Vencido' : 'Usado')) + '</b></div>';
     }).join('') : '<p class="mini">Sin planes todavía.</p>') + '</div>';
@@ -676,9 +681,17 @@ function subirFoto(input, args, refrescar) {
     if (args.producto_id) VISTAS.tienda(); else ficha(refrescar);
   }).catch(function (e) { if (e && e.mensaje) toast(e.mensaje); });
 }
+function modoTraspaso(on) {
+  $('#cp-trc').classList.toggle('oculto', !on);
+  $('#cp-monto').classList.toggle('oculto', on); $('#cp-medio').classList.toggle('oculto', on);
+  $('#cp-btn').textContent = on ? 'Traspasar clases' : 'Activar plan';
+}
 function cargarPlan(id) {
-  api('cargarPlan', { alumna_id: id, plan_id: val('cp-plan'), medio: val('cp-medio'), monto: val('cp-monto') }).then(function (r) {
-    toast('Plan activado · saldo ' + r.saldo + (r.deudas_pagadas ? ' · ' + r.deudas_pagadas + ' clase(s) pendientes pagadas' : ''));
+  var tr = $('#cp-tr').checked;
+  var args = tr ? { alumna_id: id, plan_id: val('cp-plan'), traspaso: true, inicio: val('cp-ini'), libres: val('cp-lib') }
+                : { alumna_id: id, plan_id: val('cp-plan'), medio: val('cp-medio'), monto: val('cp-monto') };
+  api('cargarPlan', args).then(function (r) {
+    toast((tr ? 'Clases traspasadas' : 'Plan activado') + ' · saldo ' + r.saldo + (r.deudas_pagadas ? ' · ' + r.deudas_pagadas + ' clase(s) pendientes pagadas' : ''));
     ficha(id);
   });
 }

@@ -649,12 +649,20 @@ var AuraCore = (function () {
         var u = soloPanel(s), al = porId('Alumnas', a.alumna_id), p = porId('Planes', a.plan_id);
         if (!al || !p) throw err('datos', 'Falta la alumna o el plan.');
         var inicio = a.inicio || hoy();
-        var dias = num(p.dias_vigencia);
-        var paId = nuevoId('PA'), pagoId = nuevoId('PG');
-        db.insert('Pagos', { id: pagoId, fecha: hoy(), alumna_id: al.id, monto: String(a.monto !== undefined && a.monto !== '' ? num(a.monto) : num(p.precio)),
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(inicio))) throw err('datos', 'Revisa la fecha de inicio.');
+        var dias = num(p.dias_vigencia), total = num(p.clases);
+        // Traspaso: plan pagado antes de la app. Se cargan solo las clases que le quedan y no se registra otra venta.
+        var traspaso = !!a.traspaso, usadas = 0;
+        if (traspaso) {
+          var quedan = num(a.libres);
+          if (!(quedan >= 1 && quedan <= total)) throw err('datos', 'Las clases que le quedan deben ser entre 1 y ' + total + '.');
+          usadas = total - quedan;
+        }
+        var paId = nuevoId('PA'), pagoId = traspaso ? '' : nuevoId('PG');
+        if (!traspaso) db.insert('Pagos', { id: pagoId, fecha: hoy(), alumna_id: al.id, monto: String(a.monto !== undefined && a.monto !== '' ? num(a.monto) : num(p.precio)),
           medio: a.medio || 'transferencia', plan_alumna_id: paId, registrado_por: u.id, nota: String(a.nota || ''), tipo: 'plan', producto_id: '', cantidad: '1' });
-        db.insert('PlanesAlumna', { id: paId, alumna_id: al.id, plan_id: p.id, clases_total: String(num(p.clases)),
-          clases_usadas: '0', inicio: inicio, vence: dias > 0 ? sumarDias(inicio, dias - 1) : '', estado: 'activo', pago_id: pagoId });
+        db.insert('PlanesAlumna', { id: paId, alumna_id: al.id, plan_id: p.id, clases_total: String(total),
+          clases_usadas: String(usadas), inicio: inicio, vence: dias > 0 ? sumarDias(inicio, dias - 1) : '', estado: 'activo', pago_id: pagoId });
         // Las clases que quedó debiendo se pagan con el plan nuevo (las más antiguas primero)
         var pagadas = 0;
         db.rows('Reservas').filter(function (r) {
@@ -665,7 +673,7 @@ var AuraCore = (function () {
           db.update('Reservas', r.id, { plan_alumna_id: paId });
           usarClase(paId, +1); pagadas++;
         });
-        log(u.id, 'cargar_plan', al.id + ' ' + p.nombre);
+        log(u.id, traspaso ? 'traspaso_plan' : 'cargar_plan', al.id + ' ' + p.nombre + (traspaso ? ' (' + (total - usadas) + ' clases)' : ''));
         return { ok: true, saldo: saldo(al.id), deudas_pagadas: pagadas };
       },
 
