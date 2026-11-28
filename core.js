@@ -444,7 +444,7 @@ var AuraCore = (function () {
     function soloAlumna(s) {
       if (s.rol !== 'alumna') throw err('permiso', 'Entra con tu cuenta de alumna.');
       var a = porId('Alumnas', s.id);
-      if (!a || a.estado === 'inactiva') throw err('sesion', 'Tu cuenta no está activa. Escríbenos por WhatsApp.');
+      if (!a || a.estado === 'inactiva' || a.estado === 'unida') throw err('sesion', 'Tu cuenta no está activa. Escríbenos por WhatsApp.');
       return a;
     }
 
@@ -623,7 +623,7 @@ var AuraCore = (function () {
 
       alumnas: function (a, s) {
         soloPanel(s);
-        return db.rows('Alumnas').map(function (al) {
+        return db.rows('Alumnas').filter(function (al) { return al.estado !== 'unida'; }).map(function (al) {
           var ps = planesDe(al.id).filter(function (p) { return p.vigente; });
           var vence = ps.map(function (p) { return p.vence; }).filter(Boolean).sort()[0] || '';
           return { id: al.id, nombre: al.nombre, rut: al.rut, telefono: al.telefono, correo: al.correo,
@@ -675,6 +675,33 @@ var AuraCore = (function () {
         });
         log(u.id, traspaso ? 'traspaso_plan' : 'cargar_plan', al.id + ' ' + p.nombre + (traspaso ? ' (' + (total - usadas) + ' clases)' : ''));
         return { ok: true, saldo: saldo(al.id), deudas_pagadas: pagadas };
+      },
+
+      /* Une una alumna duplicada con otra: todo pasa a la que queda y la duplicada desaparece de la lista */
+      unirAlumnas: function (a, s) {
+        var u = soloPanel(s, 'dueña'), q = porId('Alumnas', a.queda), d = porId('Alumnas', a.sale);
+        if (!q || !d || q.id === d.id || q.estado === 'unida' || d.estado === 'unida') throw err('datos', 'Elige dos alumnas distintas.');
+        var movidas = 0;
+        var activasQ = {}; db.rows('Reservas').forEach(function (r) { if (r.alumna_id === q.id && OCUPA[r.estado]) activasQ[r.clase_id] = 1; });
+        db.rows('Reservas').filter(function (r) { return r.alumna_id === d.id; }).forEach(function (r) {
+          var c = { alumna_id: q.id };
+          if (OCUPA[r.estado] && activasQ[r.clase_id]) { c.estado = 'cancelada'; c.cancelada = sellos(ahora()); if (r.plan_alumna_id) usarClase(r.plan_alumna_id, -1); }
+          db.update('Reservas', r.id, c); movidas++;
+        });
+        ['PlanesAlumna', 'Pagos', 'Comprobantes', 'ListaEspera'].forEach(function (t) {
+          db.rows(t).filter(function (r) { return r.alumna_id === d.id; }).forEach(function (r) { db.update(t, r.id, { alumna_id: q.id }); movidas++; });
+        });
+        var c = {};
+        ['rut', 'correo', 'telefono', 'fecha_nacimiento', 'foto', 'obs_salud'].forEach(function (k) { if (!q[k] && d[k]) c[k] = d[k]; });
+        var extra = [];
+        if (d.correo && q.correo && String(d.correo).toLowerCase() !== String(q.correo).toLowerCase()) extra.push('Otro correo: ' + d.correo);
+        if (d.telefono && q.telefono && d.telefono !== q.telefono) extra.push('Otro teléfono: ' + d.telefono);
+        if (d.notas) extra.push(d.notas);
+        if (extra.length) c.notas = [q.notas].concat(extra).filter(Boolean).join('\n');
+        db.update('Alumnas', q.id, c);
+        db.update('Alumnas', d.id, { estado: 'unida', correo: '', rut: '', notas: 'Unida con ' + q.id + (d.correo ? ' (' + d.correo + ')' : '') });
+        log(u.id, 'unir_alumnas', d.id + ' → ' + q.id);
+        return { ok: true, movidas: movidas, saldo: saldo(q.id) };
       },
 
       editarAlumna: function (a, s) {
@@ -998,7 +1025,7 @@ var AuraCore = (function () {
         if (!asunto || !texto) throw err('datos', 'Escribe el asunto y el mensaje.');
         var n = 0;
         db.rows('Alumnas').forEach(function (al) {
-          if (al.estado === 'inactiva' || !al.correo) return;
+          if (al.estado === 'inactiva' || al.estado === 'unida' || !al.correo) return;
           if (env.avisar) { env.avisar(al.correo, asunto, 'Hola ' + String(al.nombre).split(' ')[0] + ',\n\n' + texto + '\n\nAura Studio Pilates'); n++; }
         });
         log(u.id, 'aviso_general', asunto + ' (' + n + ')');

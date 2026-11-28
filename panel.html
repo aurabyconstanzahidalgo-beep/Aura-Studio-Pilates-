@@ -96,6 +96,9 @@
   #prev-ig { width: 100%; border-radius: 12px; box-shadow: var(--sombra); }
 
   .aviso { border-radius: 14px; padding: .65rem .85rem; font-size: .88rem; background: var(--lavanda); }
+  .correo-f { display: block; font-size: .78rem; color: var(--suave); font-weight: 400; }
+  .un-lista { max-height: 46vh; overflow: auto; }
+  .un-t { background: var(--fondo); border-radius: 14px; padding: .7rem .9rem; margin-top: .5rem; } .un-t .chip { margin-right: .5rem; }
   .chk-tr { display: flex; gap: .5rem; align-items: flex-start; margin-top: .7rem; font-size: .86rem; color: var(--suave); cursor: pointer; }
   .chk-tr input { margin-top: .2rem; }
   .frases-caja { margin-top: 2rem; }
@@ -537,18 +540,21 @@ function descargarIG() { $('#ig').toBlob(function (b) { descargar('aura-horario-
 /* =================== ALUMNAS =================== */
 function cargarAlumnas() { return api('alumnas').then(function (l) { alumnasCache = l; return l; }); }
 VISTAS.alumnas = function () {
-  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Alumnas</h1><button class="btn claro peq" onclick="importarLista()">Importar lista</button><button class="btn peq" onclick="nuevaAlumna()">+ Nueva alumna</button></div><div class="buscar"><input class="entrada" id="qa" placeholder="Buscar por nombre, RUT o teléfono" oninput="pintarAlumnas()"></div><div id="tabla"><div class="cargando">Cargando…</div></div>';
+  $('#cuerpo').innerHTML = '<div class="nav-dia"><h1>Alumnas</h1><button class="btn claro peq" onclick="importarLista()">Importar lista</button><button class="btn peq" onclick="nuevaAlumna()">+ Nueva alumna</button></div><div class="buscar"><input class="entrada" id="qa" placeholder="Buscar por nombre, RUT, correo o teléfono" oninput="pintarAlumnas()"></div><div id="tabla"><div class="cargando">Cargando…</div></div>';
   cargarAlumnas().then(pintarAlumnas);
 };
+function normNom(n) { return String(n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim(); }
 function pintarAlumnas() {
   var q = (val('qa') || '').toLowerCase();
-  var l = alumnasCache.filter(function (a) { return (a.nombre + ' ' + a.rut + ' ' + a.telefono).toLowerCase().indexOf(q) >= 0; });
+  var l = alumnasCache.filter(function (a) { return (a.nombre + ' ' + a.rut + ' ' + a.telefono + ' ' + a.correo).toLowerCase().indexOf(q) >= 0; });
+  var cuenta = {}; alumnasCache.forEach(function (a) { var k = normNom(a.nombre); cuenta[k] = (cuenta[k] || 0) + 1; });
   var activas = alumnasCache.filter(function (a) { return a.saldo > 0; }).length;
   $('#tabla').innerHTML = '<p class="mini" style="margin:-.4rem 0 .8rem">' + alumnasCache.length + ' alumnas · ' + activas + ' con plan activo</p>' +
     '<table class="tabla"><thead><tr><th>Nombre</th><th class="num">Saldo</th><th class="opc">Vence</th><th class="opc">Teléfono</th></tr></thead><tbody>' +
     l.map(function (a) {
       return '<tr class="fila" onclick="ficha(\'' + a.id + '\')"><td><div class="quien">' + av(a.nombre, a.foto, 'm') + '<span><b>' + esc(a.nombre) + '</b>' + (a.estado === 'inactiva' ? ' <span class="chip gris">inactiva</span>' : '') +
-        (a.deudas ? ' <span class="chip alerta">debe ' + a.deudas + '</span>' : '') + '</span></div></td><td class="num">' + a.saldo + '</td><td class="opc">' + fCorta(a.vence) + '</td><td class="opc">' + esc(a.telefono) + '</td></tr>';
+        (cuenta[normNom(a.nombre)] > 1 ? ' <span class="chip pago">repetida</span>' : '') +
+        (a.deudas ? ' <span class="chip alerta">debe ' + a.deudas + '</span>' : '') + (a.correo ? '<small class="correo-f">' + esc(a.correo) + '</small>' : '') + '</span></div></td><td class="num">' + a.saldo + '</td><td class="opc">' + fCorta(a.vence) + '</td><td class="opc">' + esc(a.telefono) + '</td></tr>';
     }).join('') + '</tbody></table>';
   Aura.pintarFotos($('#tabla'), token);
 }
@@ -668,9 +674,39 @@ function ficha(id) {
     if (f.pagos) h += '<div class="bloque-f"><h4>Pagos</h4>' + (f.pagos.length ? f.pagos.slice().reverse().map(function (p) {
       return '<div class="dato"><span>' + fCorta(p.fecha) + ' · ' + esc(p.tipo === 'producto' ? p.nota : 'Plan') + ' · ' + esc(p.medio) + '</span><b>' + plata(p.monto) + '</b></div>'; }).join('') : '<p class="mini">Sin pagos.</p>') + '</div>';
     if (rol === 'dueña') h += '<div class="bloque-f"><h4>PIN de ingreso</h4><div class="fila2"><input class="entrada" id="np" inputmode="numeric" maxlength="4" placeholder="PIN nuevo (4 números)"><button class="btn claro" onclick="api(\'nuevoPin\',{id:\'' + a.id + '\',pin:val(\'np\')}).then(function(){toast(\'PIN actualizado\')})">Cambiar PIN</button></div></div>';
-    h += '<div class="acciones" style="margin-top:1.2rem"><button class="btn borde peq" onclick="api(\'editarAlumna\',{id:\'' + a.id + '\',estado:\'' + (a.estado === 'inactiva' ? 'activa' : 'inactiva') + '\'}).then(function(){cerrarModal();toast(\'Listo\');VISTAS.alumnas()})">' + (a.estado === 'inactiva' ? 'Reactivar alumna' : 'Desactivar alumna') + '</button><button class="btn claro peq" onclick="cerrarModal()">Cerrar</button></div>';
+    h += '<div class="acciones" style="margin-top:1.2rem"><button class="btn borde peq" onclick="api(\'editarAlumna\',{id:\'' + a.id + '\',estado:\'' + (a.estado === 'inactiva' ? 'activa' : 'inactiva') + '\'}).then(function(){cerrarModal();toast(\'Listo\');VISTAS.alumnas()})">' + (a.estado === 'inactiva' ? 'Reactivar alumna' : 'Desactivar alumna') + '</button>' + (rol === 'dueña' ? '<button class="btn borde peq" onclick="unirCon(\'' + a.id + '\')">Unir con otra alumna</button>' : '') + '<button class="btn claro peq" onclick="cerrarModal()">Cerrar</button></div>';
     modal(h);
   });
+}
+/* ----- Unir alumnas repetidas ----- */
+function unirCon(id) {
+  var yo = alumnasCache.filter(function (x) { return x.id === id; })[0], k = normNom(yo.nombre), ap = k.split(' ').slice(0, 2).join(' ');
+  var otras = alumnasCache.filter(function (x) { return x.id !== id; }).sort(function (x, y) {
+    var px = normNom(x.nombre) === k ? 0 : normNom(x.nombre).indexOf(ap) === 0 ? 1 : 2, py = normNom(y.nombre) === k ? 0 : normNom(y.nombre).indexOf(ap) === 0 ? 1 : 2;
+    return px - py || (x.nombre < y.nombre ? -1 : 1);
+  });
+  modal('<h3>Unir con otra alumna</h3><p class="sub">Si <b>' + esc(yo.nombre) + '</b> quedó repetida, elige la otra ficha. Sus clases, planes y pagos se juntan en una sola.</p>' +
+    '<input class="entrada" id="un-q" placeholder="Buscar…" oninput="filtrarUnir()" style="margin-bottom:.6rem"><div id="un-l" class="un-lista">' +
+    otras.map(function (x) {
+      return '<div class="persona un-op" data-t="' + esc((x.nombre + ' ' + x.correo).toLowerCase()) + '" onclick="confirmarUnir(\'' + id + '\',\'' + x.id + '\')" style="cursor:pointer">' + av(x.nombre, x.foto) +
+        '<div class="datos"><div><b>' + esc(x.nombre) + '</b>' + (normNom(x.nombre) === k ? ' <span class="chip pago">mismo nombre</span>' : '') + '</div><div class="mini">' + esc(x.correo || 'sin correo') + ' · ' + x.saldo + ' clases</div></div></div>';
+    }).join('') + '</div><div class="acciones"><button class="btn claro" onclick="ficha(\'' + id + '\')">Volver</button></div>');
+  Aura.pintarFotos($('#un-l'), token);
+}
+function filtrarUnir() { var q = val('un-q').toLowerCase(); document.querySelectorAll('.un-op').forEach(function (e) { e.style.display = e.dataset.t.indexOf(q) >= 0 ? '' : 'none'; }); }
+function confirmarUnir(queda, sale) {
+  var Q = alumnasCache.filter(function (x) { return x.id === queda; })[0], S = alumnasCache.filter(function (x) { return x.id === sale; })[0];
+  var tarjeta = function (a, t) { return '<div class="un-t"><span class="chip ' + (t === 'Se queda' ? 'salvia' : 'gris') + '">' + t + '</span><b>' + esc(a.nombre) + '</b><div class="mini">' + esc(a.correo || 'sin correo') + ' · ' + a.saldo + ' clases</div></div>'; };
+  modal('<h3>¿Unir estas fichas?</h3>' + tarjeta(Q, 'Se queda') + tarjeta(S, 'Se une y desaparece') +
+    '<p class="sub" style="margin-top:.8rem">La alumna entra con el correo o RUT de la ficha que se queda. El otro correo queda anotado en sus notas.</p>' +
+    '<button class="link" onclick="confirmarUnir(\'' + sale + '\',\'' + queda + '\')">↺ Prefiero dejar la otra ficha</button>' +
+    '<div class="acciones"><button class="btn claro" onclick="unirCon(\'' + queda + '\')">Volver</button><button class="btn" id="un-ok" onclick="hacerUnir(\'' + queda + '\',\'' + sale + '\')">Unir</button></div>');
+}
+function hacerUnir(queda, sale) {
+  $('#un-ok').disabled = true;
+  api('unirAlumnas', { queda: queda, sale: sale }).then(function (r) {
+    toast('Fichas unidas · saldo ' + r.saldo); return cargarAlumnas();
+  }).then(function () { if ($('#tabla')) pintarAlumnas(); ficha(queda); }, function () { var b = $('#un-ok'); if (b) b.disabled = false; });
 }
 function subirFoto(input, args, refrescar) {
   var f = input.files[0]; if (!f) return;
